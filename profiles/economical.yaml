@@ -1,0 +1,10 @@
+schema_version: 1
+name: economical
+endpoint: litellm-edge
+interactive_model: litellm-edge/cl/gpt-5.6-luna
+small_model: litellm-edge/an/gemini-3.7-flash-low
+preferred_reasoning_level: low
+notes:
+  - Use Luna for ordinary interactive work.
+  - Use Gemini Flash for short discovery, formatting, and low-risk checks.
+  - Preserve Opus and Sol fallbacks for tasks that require them; do not remove them from the catalog.

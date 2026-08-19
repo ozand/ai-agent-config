@@ -1,0 +1,42 @@
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+secrets/
+.keys/
+.local/
+private/
+
+# Client runtime state
+auth.json
+models-store.json
+trust.json
+sessions/
+.pi/sessions/
+.opencode/account*
+.opencode/auth*
+
+# Generated and temporary files
+generated/
+rendered/
+backups/
+*.bak
+*.tmp
+*.log
+
+# Python caches
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

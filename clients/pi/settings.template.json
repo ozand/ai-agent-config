@@ -1,0 +1,89 @@
+{
+  "defaultProvider": "litellm-edge",
+  "defaultModel": "cl/gpt-5.6-luna",
+  "defaultThinkingLevel": "low",
+  "enabledModels": [
+    "cl/*",
+    "an/*",
+    "un/gpt-oss-20b-GGUF",
+    "un/qwen3.8-27b-gguf"
+  ],
+  "packages": [
+    "npm:context-mode@1.0.169",
+    "npm:pi-subagents@0.50.0",
+    "npm:pi-interactive-shell@0.15.0",
+    "npm:pi-intercom@0.10.1"
+  ],
+  "theme": "dark",
+  "extensions": [
+    "~/.pi/agent/extensions/auto-compact-272k.ts"
+  ],
+  "quietStartup": true,
+  "hideThinkingBlock": false,
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000
+  },
+  "retry": {
+    "enabled": true,
+    "maxRetries": 5,
+    "baseDelayMs": 2000,
+    "provider": {
+      "timeoutMs": 3600000,
+      "maxRetries": 0,
+      "maxRetryDelayMs": 60000
+    }
+  },
+  "transport": "auto",
+  "httpIdleTimeoutMs": 300000,
+  "websocketConnectTimeoutMs": 15000,
+  "sessionDir": ".pi/sessions",
+  "subagents": {
+    "agentOverrides": {
+      "scout": {
+        "model": "litellm-edge/cl/gpt-5.6-luna",
+        "fallbackModels": [
+          "litellm-edge/an/gemini-3.7-flash-low",
+          "litellm-edge/cl/gpt-5.6-terra"
+        ]
+      },
+      "researcher": {
+        "model": "litellm-edge/an/gemini-3.1-pro-high",
+        "fallbackModels": [
+          "litellm-edge/an/gemini-3.7-flash-high",
+          "litellm-edge/cl/gpt-5.6-terra"
+        ]
+      },
+      "oracle": {
+        "model": "litellm-edge/an/claude-opus-4-6",
+        "fallbackModels": [
+          "litellm-edge/an/gemini-3.1-pro-high",
+          "litellm-edge/cl/gpt-5.6-sol"
+        ]
+      },
+      "worker": {
+        "model": "litellm-edge/an/claude-sonnet-4-6",
+        "fallbackModels": [
+          "litellm-edge/an/gemini-3.7-flash-high",
+          "litellm-edge/cl/gpt-5.6-terra"
+        ]
+      },
+      "reviewer": {
+        "model": "litellm-edge/an/claude-opus-4-6",
+        "fallbackModels": [
+          "litellm-edge/an/gemini-3.1-pro-high",
+          "litellm-edge/cl/gpt-5.6-sol"
+        ]
+      },
+      "delegate": {
+        "model": "litellm-edge/an/gemini-3.7-flash-high",
+        "fallbackModels": [
+          "litellm-edge/an/gemini-3.1-pro-high",
+          "litellm-edge/cl/gpt-5.6-terra"
+        ]
+      }
+    }
+  },
+  "tuiMode": "regular"
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Opencode-DCP/opencode-dynamic-context-pruning/master/dcp.schema.json",
+  "enabled": true,
+  "debug": false,
+  "turnProtection": {
+    "enabled": true,
+    "turns": 4
+  },
+  "compress": {
+    "mode": "range",
+    "permission": "allow",
+    "modelMaxLimits": {
+      "litellm-edge/cl/gpt-5.6-luna": 890000,
+      "litellm-edge/cl/gpt-5.6-sol": 890000,
+      "litellm-edge/cl/gpt-5.6-terra": 890000,
+      "litellm-edge/an/gemini-3.1-pro-low": 750000,
+      "litellm-edge/an/gemini-3.7-flash-low": 750000
+    },
+    "modelMinLimits": {
+      "litellm-edge/cl/gpt-5.6-luna": 580000,
+      "litellm-edge/cl/gpt-5.6-sol": 580000,
+      "litellm-edge/cl/gpt-5.6-terra": 580000,
+      "litellm-edge/an/gemini-3.1-pro-low": 450000,
+      "litellm-edge/an/gemini-3.7-flash-low": 450000
+    },
+    "nudgeFrequency": 5,
+    "iterationNudgeThreshold": 15,
+    "nudgeForce": "soft",
+    "protectUserMessages": false
+  },
+  "strategies": {
+    "deduplication": {"enabled": true},
+    "purgeErrors": {"enabled": true, "turns": 4}
+  }
+}

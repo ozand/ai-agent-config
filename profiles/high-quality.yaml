@@ -1,0 +1,11 @@
+schema_version: 1
+name: high-quality
+endpoint: litellm-edge
+interactive_model: litellm-edge/cl/gpt-5.6-luna
+review_model: litellm-edge/an/claude-opus-4-6
+implementation_model: litellm-edge/an/claude-sonnet-4-6
+high_capability_fallback: litellm-edge/cl/gpt-5.6-sol
+notes:
+  - Keep independent reviewer context fresh.
+  - Preserve Gemini and GPT fallback families for every delegated role.
+  - Do not use a high-capability route as proof that lower-cost routes are unhealthy.

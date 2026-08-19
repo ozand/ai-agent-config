@@ -1,0 +1,29 @@
+schema_version: 1
+id: litellm-edge
+display_name: LiteLLM Edge
+api_style: openai_compatible
+base_url: https://litellm.ayga.tech/v1
+public_model_catalog: catalog/models.json
+
+credential:
+  logical_name: LITELLM_EDGE_API_KEY
+  tracked_value: never
+  pi:
+    method: command_resolver
+    local_file_windows: '%USERPROFILE%\.pi\agent\.secrets\litellm-api-key'
+    reader_script: clients/pi/scripts/read-litellm-api-key.ps1
+  opencode:
+    method: environment_reference
+    reference: '{env:LITELLM_EDGE_API_KEY}'
+
+verification_gates:
+  - credential_resolution
+  - model_discovery
+  - model_metadata
+  - representative_completion
+  - client_model_resolution
+
+notes:
+  - Do not copy live LiteLLM deployment configuration into this repository.
+  - Do not store authenticated response payloads.
+  - Provider prefixes are routing contracts and must be preserved.

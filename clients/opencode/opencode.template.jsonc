@@ -1,0 +1,372 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "litellm-edge/cl/gpt-5.6-luna",
+  "small_model": "litellm-edge/an/gemini-3.7-flash-low",
+  "default_agent": "orchestrator",
+  "provider": {
+    "litellm-edge": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LiteLLM Edge",
+      "options": {
+        "baseURL": "https://litellm.ayga.tech/v1",
+        "apiKey": "{env:LITELLM_EDGE_API_KEY}"
+      },
+      "models": {
+        "an/claude-haiku-4-5-20251001": {
+          "name": "Claude Haiku 4.5"
+        },
+        "an/claude-opus-4-6": {
+          "name": "Claude Opus 4.6"
+        },
+        "an/claude-sonnet-4-6": {
+          "name": "Claude Sonnet 4.6",
+          "reasoning": true,
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "cost": {
+            "input": 3.0,
+            "output": 15.0,
+            "cache_read": 0.3,
+            "cache_write": 3.75
+          }
+        },
+        "an/gemini-3-pro-image": {
+          "name": "Gemini 3 Pro Image"
+        },
+        "an/gemini-3-pro-image-16x9": {
+          "name": "Gemini 3 Pro Image 16x9"
+        },
+        "an/gemini-3-pro-image-1x1": {
+          "name": "Gemini 3 Pro Image 1x1"
+        },
+        "an/gemini-3-pro-image-21x9": {
+          "name": "Gemini 3 Pro Image 21x9"
+        },
+        "an/gemini-3-pro-image-2k": {
+          "name": "Gemini 3 Pro Image 2K"
+        },
+        "an/gemini-3-pro-image-2k-16x9": {
+          "name": "Gemini 3 Pro Image 2K 16x9"
+        },
+        "an/gemini-3-pro-image-2k-1x1": {
+          "name": "Gemini 3 Pro Image 2K 1x1"
+        },
+        "an/gemini-3-pro-image-2k-21x9": {
+          "name": "Gemini 3 Pro Image 2K 21x9"
+        },
+        "an/gemini-3-pro-image-2k-3x4": {
+          "name": "Gemini 3 Pro Image 2K 3x4"
+        },
+        "an/gemini-3-pro-image-2k-4x3": {
+          "name": "Gemini 3 Pro Image 2K 4x3"
+        },
+        "an/gemini-3-pro-image-2k-9x16": {
+          "name": "Gemini 3 Pro Image 2K 9x16"
+        },
+        "an/gemini-3-pro-image-3x4": {
+          "name": "Gemini 3 Pro Image 3x4"
+        },
+        "an/gemini-3-pro-image-4k": {
+          "name": "Gemini 3 Pro Image 4K"
+        },
+        "an/gemini-3-pro-image-4k-16x9": {
+          "name": "Gemini 3 Pro Image 4K 16x9"
+        },
+        "an/gemini-3-pro-image-4k-1x1": {
+          "name": "Gemini 3 Pro Image 4K 1x1"
+        },
+        "an/gemini-3-pro-image-4k-21x9": {
+          "name": "Gemini 3 Pro Image 4K 21x9"
+        },
+        "an/gemini-3-pro-image-4k-3x4": {
+          "name": "Gemini 3 Pro Image 4K 3x4"
+        },
+        "an/gemini-3-pro-image-4k-4x3": {
+          "name": "Gemini 3 Pro Image 4K 4x3"
+        },
+        "an/gemini-3-pro-image-4k-9x16": {
+          "name": "Gemini 3 Pro Image 4K 9x16"
+        },
+        "an/gemini-3-pro-image-4x3": {
+          "name": "Gemini 3 Pro Image 4x3"
+        },
+        "an/gemini-3-pro-image-9x16": {
+          "name": "Gemini 3 Pro Image 9x16"
+        },
+        "an/gemini-3.1-flash-image": {
+          "name": "Gemini 3.1 Flash Image"
+        },
+        "an/gemini-3.1-pro": {
+          "name": "Gemini 3.1 Pro"
+        },
+        "an/gemini-3.1-pro-high": {
+          "name": "Gemini 3.1 Pro High",
+          "reasoning": true
+        },
+        "an/gemini-3.1-pro-low": {
+          "name": "Gemini 3.1 Pro Low",
+          "reasoning": true,
+          "cost": {
+            "input": 2.0,
+            "output": 12.0
+          }
+        },
+        "an/gemini-3.7-flash-high": {
+          "name": "Gemini 3.7 Flash High",
+          "reasoning": true
+        },
+        "an/gemini-3.7-flash-low": {
+          "name": "Gemini 3.7 Flash Low",
+          "reasoning": true,
+          "cost": {
+            "input": 0.75,
+            "output": 3.75
+          }
+        },
+        "an/gemini-3.7-flash-medium": {
+          "name": "Gemini 3.7 Flash Medium",
+          "reasoning": true
+        },
+        "an/gpt-oss-120b-medium": {
+          "name": "GPT-OSS 120B Medium"
+        },
+        "cl/gemini-3.1-flash-image": {
+          "name": "Gemini 3.1 Flash Image"
+        },
+        "cl/gpt-5.6-luna": {
+          "name": "GPT-5.6 Luna",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "cost": {
+            "input": 0.2,
+            "output": 1.2,
+            "cache_read": 0.02,
+            "cache_write": 0.25
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          }
+        },
+        "cl/gpt-5.6-sol": {
+          "name": "GPT-5.6 Sol",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "cost": {
+            "input": 5.0,
+            "output": 30.0,
+            "cache_read": 0.5,
+            "cache_write": 6.25
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          }
+        },
+        "cl/gpt-5.6-terra": {
+          "name": "GPT-5.6 Terra",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "cost": {
+            "input": 2.0,
+            "output": 12.0,
+            "cache_read": 0.2,
+            "cache_write": 2.5
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          }
+        },
+        "cl/gpt-image-1.5": {
+          "name": "GPT Image 1.5"
+        },
+        "cl/gpt-image-2": {
+          "name": "GPT Image 2"
+        },
+        "un/gpt-oss-20b-GGUF": {
+          "name": "GPT-OSS 20B GGUF"
+        },
+        "un/qwen3.8-27b-gguf": {
+          "name": "Qwen3.8 27B GGUF",
+          "reasoning": true,
+          "modalities": {
+            "input": [
+              "text"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "agent": {
+    "orchestrator": {
+      "description": "Orchestration-first primary agent: coordinates multi-step execution through subagents, keeps todo state synchronized, and avoids overengineering.",
+      "mode": "primary",
+      "model": "litellm-edge/cl/gpt-5.6-luna",
+      "variant": "medium",
+      "temperature": 0,
+      "steps": 90,
+      "permission": {
+        "task": {
+          "*": "deny",
+          "general": "allow",
+          "explore": "allow",
+          "docs-writer": "allow",
+          "security-auditor": "allow",
+          "knowledge-extractor": "allow"
+        }
+      },
+      "color": "warning",
+      "prompt": "You are an orchestration-first primary agent, not a chat-first assistant and not a default solo executor.\n\nCore execution mode:\n- Coordinate first\n- Delegate second\n- Execute directly only for orchestration/integration tasks that cannot be delegated safely\n\nSubagent policy:\n- Use `explore` for read-only discovery, dependency tracing, and package/slice analysis\n- Use `general` for executable multi-step subwork\n- Use `docs-writer` and `security-auditor` only when their specialization is required\n- Do not claim delegation unless a subagent was actually invoked\n\nTodo policy:\n- Treat `todo.md` as the source of truth for task status\n- Update status immediately when work starts (`in_progress`)\n- Update status when a bounded objective is completed (`completed`)\n- Keep comments short and operational\n- Prevent duplicate parallel execution of the same task\n\nCheckpoint policy:\n- Do not stop after one micro-step if the next step is obvious\n- Continue internal orchestration across linked steps until one meaningful checkpoint is reached:\n  1) bounded substage completed\n  2) blocker found\n  3) explicit user decision required\n  4) next step is no longer obvious\n\nSimplicity policy:\n- Follow product simplicity\n- Do not expand scope without necessity\n- Avoid overengineering and unnecessary abstraction\n\nResponse contract (compact):\nStatus: <1 line>\nTask: <1 line>\nDelegation: <subagent chain or none + reason>\nTodo:\n- in_progress: <...>\n- completed: <...>\nResult:\n- <1 line>\nBlockers:\n- <none or 1 short line>\nNext step:\n- <1 concrete step>\nNeed from user:\n- <none or 1 short question>\n\nDo not include introductions, long explanations, or history retelling. Keep each block concise.",
+      "options": {}
+    },
+    "build": {
+      "description": "Coding-first primary agent optimized for fast, high-quality implementation work.",
+      "mode": "primary",
+      "model": "litellm-edge/cl/gpt-5.6-luna",
+      "steps": 60,
+      "permission": {
+        "task": {
+          "*": "deny",
+          "general": "allow",
+          "explore": "allow",
+          "security-auditor": "allow",
+          "docs-writer": "allow",
+          "knowledge-extractor": "allow"
+        }
+      },
+      "temperature": 0.1,
+      "color": "primary",
+      "options": {}
+    },
+    "plan": {
+      "description": "Analysis-first primary agent for architecture, review, and planning without silent changes.",
+      "mode": "primary",
+      "model": "litellm-edge/an/claude-sonnet-4-6",
+      "variant": "medium",
+      "temperature": 0,
+      "steps": 75,
+      "permission": {
+        "edit": "ask",
+        "bash": "ask",
+        "task": {
+          "*": "deny",
+          "general": "allow",
+          "explore": "allow",
+          "docs-writer": "allow",
+          "security-auditor": "ask",
+          "knowledge-extractor": "allow"
+        }
+      },
+      "color": "info",
+      "options": {}
+    },
+    "fast-check": {
+      "description": "Fast low-cost primary agent for quick checks, short edits, and lightweight verification.",
+      "mode": "primary",
+      "model": "litellm-edge/an/gemini-3.7-flash-low",
+      "permission": {
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "ask",
+          "knowledge-extractor": "allow"
+        }
+      },
+      "temperature": 0,
+      "steps": 24,
+      "color": "success",
+      "options": {}
+    },
+    "general": {
+      "model": "litellm-edge/an/gemini-3.7-flash-low",
+      "steps": 120,
+      "options": {},
+      "permission": {}
+    },
+    "explore": {
+      "model": "litellm-edge/an/gemini-3.7-flash-low",
+      "steps": 90,
+      "options": {},
+      "permission": {}
+    }
+  }
+}

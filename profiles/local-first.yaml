@@ -1,0 +1,14 @@
+schema_version: 1
+name: local-first
+endpoint: litellm-edge
+interactive_model: litellm-edge/un/qwen3.8-27b-gguf
+fallback_model: litellm-edge/cl/gpt-5.6-luna
+qwen:
+  input: text_only
+  pi_context_window: 73728
+  runtime_context_window: 98304
+  exact_reasoning_token_budgets: disabled
+notes:
+  - Use only while the local backend is healthy.
+  - Catalog presence does not prove backend availability.
+  - Do not probe image input for this text-only route.

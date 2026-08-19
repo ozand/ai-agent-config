@@ -1,0 +1,67 @@
+schema_version: 1
+policy_name: current-approved
+
+provider_priority:
+  claude: an
+  gemini: an
+  gpt_5_6: cl
+  local_and_open_weight: un
+
+defaults:
+  interactive: litellm-edge/cl/gpt-5.6-luna
+  small_fast: litellm-edge/an/gemini-3.7-flash-low
+
+approved_ordinary_families:
+  - an/claude-haiku-4-5-20251001
+  - an/claude-opus-4-6
+  - an/claude-sonnet-4-6
+  - an/gemini-3.1-pro
+  - an/gemini-3.1-pro-high
+  - an/gemini-3.1-pro-low
+  - an/gemini-3.7-flash-high
+  - an/gemini-3.7-flash-low
+  - an/gemini-3.7-flash-medium
+  - an/gpt-oss-120b-medium
+  - cl/gpt-5.6-luna
+  - cl/gpt-5.6-sol
+  - cl/gpt-5.6-terra
+  - un/gpt-oss-20b-GGUF
+  - un/qwen3.8-27b-gguf
+
+preserve_image_generation_variants: true
+
+stale_active_patterns:
+  - gpt-5.3
+  - gpt-5.4
+  - gpt-5.5
+  - gemini-3.5
+  - gemini-3.6
+  - qwen3.6
+  - sol1
+
+reasoning_policy:
+  use_client_variants_when_supported: true
+  do_not_duplicate_physical_models_for_reasoning_tiers: true
+  unknown_capability_state: unknown
+  qwen_exact_token_budgets_allowed: false
+
+metadata_policy:
+  source_order:
+    - authenticated_endpoint
+    - live_deployment_documentation
+    - repository_knowledge
+    - client_configuration
+  do_not_infer_missing_values: true
+  pricing_unit: usd_per_million_tokens
+
+qwen38:
+  route: un/qwen3.8-27b-gguf
+  input: text_only
+  runtime_context_window: 98304
+  pi_context_window: 73728
+  opencode_limit: omitted_until_output_limit_is_known
+  pi_reasoning_map:
+    off: disabled
+    low: low
+    medium: medium
+    high: xhigh

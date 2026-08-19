@@ -1,0 +1,11 @@
+schema_version: 1
+name: default
+endpoint: litellm-edge
+interactive_model: litellm-edge/cl/gpt-5.6-luna
+small_model: litellm-edge/an/gemini-3.7-flash-low
+pi_thinking_level: low
+policy: catalog/model-policy.yaml
+agent_routing: catalog/agent-routing.yaml
+notes:
+  - Role-specific agent routing remains authoritative over the interactive default.
+  - Pi auto-compaction applies after 272000 tokens only for models advertising a larger context window.

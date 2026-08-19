@@ -1,0 +1,16 @@
+schema_version: 1
+id: local-example
+display_name: Local OpenAI-Compatible Example
+api_style: openai_compatible
+base_url: http://127.0.0.1:8080/v1
+
+credential:
+  logical_name: LOCAL_EXAMPLE_API_KEY
+  tracked_value: never
+  notes:
+    - Use a non-secret placeholder only if the server explicitly ignores authentication.
+    - Otherwise supply a real credential locally through the client-supported secret mechanism.
+
+models:
+  - id: local-model-id
+    metadata_status: unknown_until_verified

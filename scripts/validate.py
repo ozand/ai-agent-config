@@ -151,6 +151,31 @@ def validate_qwen() -> None:
         fail("OpenCode Qwen limit must remain absent until output limit is known")
     if oc_qwen.get("modalities", {}).get("input") != ["text"]:
         fail("OpenCode Qwen must be text-only")
+    # Cost schema: local operating cost is unknown; hosted reference is for comparison only.
+    if "costPerMillion" in canonical_qwen:
+        fail("Canonical Qwen must not use costPerMillion; use localCostPerMillion/hostedReferenceCostPerMillion")
+    if canonical_qwen.get("localCostPerMillion") is not None:
+        fail("Canonical Qwen localCostPerMillion must be null until verified local data exists")
+    hosted = canonical_qwen.get("hostedReferenceCostPerMillion")
+    if hosted is None:
+        fail("Canonical Qwen must have hostedReferenceCostPerMillion for comparison reference")
+    if not hosted.get("source", "").startswith("OpenRouter"):
+        fail("Qwen hostedReferenceCostPerMillion must cite OpenRouter as source")
+    if "https://openrouter.ai/qwen/qwen3.8-27b" not in hosted.get("source", ""):
+        fail("Qwen hostedReferenceCostPerMillion source must reference https://openrouter.ai/qwen/qwen3.8-27b")
+    if hosted.get("retrievedDate") != "2026-08-20":
+        fail("Qwen hostedReferenceCostPerMillion retrievedDate must be 2026-08-20 (actual evidence collection date)")
+    if hosted.get("input") != 0.40 or hosted.get("output") != 3.00:
+        fail("Qwen hostedReferenceCostPerMillion input/output must match OpenRouter reference values")
+    if hosted.get("cacheRead") != 0.04:
+        fail("Qwen hostedReferenceCostPerMillion cacheRead must be 0.04")
+    if hosted.get("cacheWrite") is not None:
+        fail("Qwen hostedReferenceCostPerMillion cacheWrite must be null (unknown)")
+    # Rendered clients must not expose cost for Qwen (local cost unknown)
+    if "cost" in pi_qwen:
+        fail("Pi Qwen must not have a cost field until local operating cost is verified")
+    if "cost" in oc_qwen:
+        fail("OpenCode Qwen must not have a cost field until local operating cost is verified")
 
 
 def validate_policy_documents() -> None:

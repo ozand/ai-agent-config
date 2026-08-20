@@ -37,7 +37,18 @@ def pi_model(model: dict) -> dict:
         if source in model:
             result[target] = model[source]
 
-    if "costPerMillion" in model:
+    # Emit cost only when a verified local cost is present.
+    # localCostPerMillion: null means unknown local cost — do not substitute
+    # hostedReferenceCostPerMillion; that field is for documentation only.
+    local_cost = model.get("localCostPerMillion")
+    if local_cost is not None:
+        result["cost"] = {
+            "input": local_cost["input"],
+            "output": local_cost["output"],
+            "cacheRead": local_cost.get("cacheRead", 0.0),
+            "cacheWrite": local_cost.get("cacheWrite", 0.0),
+        }
+    elif "costPerMillion" in model:
         cost = model["costPerMillion"]
         result["cost"] = {
             "input": cost["input"],
@@ -84,13 +95,24 @@ def opencode_model(model: dict) -> dict:
             result["modalities"]["input"] = model["input"]
         if "output" in model:
             result["modalities"]["output"] = model["output"]
-    if "costPerMillion" in model and model["id"] != "un/qwen3.8-27b-gguf":
-        cost = model["costPerMillion"]
-        result["cost"] = {"input": cost["input"], "output": cost["output"]}
-        if "cacheRead" in cost:
-            result["cost"]["cache_read"] = cost["cacheRead"]
-        if "cacheWrite" in cost:
-            result["cost"]["cache_write"] = cost["cacheWrite"]
+    # Emit cost only when a verified local cost is present.
+    # localCostPerMillion: null means unknown local cost — do not substitute
+    # hostedReferenceCostPerMillion; that field is for documentation only.
+    local_cost = model.get("localCostPerMillion")
+    if model["id"] != "un/qwen3.8-27b-gguf":
+        if local_cost is not None:
+            result["cost"] = {"input": local_cost["input"], "output": local_cost["output"]}
+            if "cacheRead" in local_cost:
+                result["cost"]["cache_read"] = local_cost["cacheRead"]
+            if "cacheWrite" in local_cost:
+                result["cost"]["cache_write"] = local_cost["cacheWrite"]
+        elif "costPerMillion" in model:
+            cost = model["costPerMillion"]
+            result["cost"] = {"input": cost["input"], "output": cost["output"]}
+            if "cacheRead" in cost:
+                result["cost"]["cache_read"] = cost["cacheRead"]
+            if "cacheWrite" in cost:
+                result["cost"]["cache_write"] = cost["cacheWrite"]
     if "reasoningVariants" in model:
         result["variants"] = {
             variant: {"reasoningEffort": variant}

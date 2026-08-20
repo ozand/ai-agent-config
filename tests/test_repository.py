@@ -89,6 +89,58 @@ class RepositoryPolicyTests(unittest.TestCase):
         self.assertNotIn("limit", opencode)
         self.assertEqual(opencode["modalities"]["input"], ["text"])
 
+    def test_qwen_cost_schema(self) -> None:
+        """Verify Qwen cost schema:  local cost is null/absent; hosted reference is present.
+
+        The local operating cost must remain null until power/tariff/throughput
+        evidence is collected and verified locally. The hosted reference records
+        the observed OpenRouter pricing for comparison only and must not be
+        propagated into rendered client templates.
+        """
+        canonical = next(
+            model
+            for model in load_json("catalog/models.json")["models"]
+            if model["id"] == "un/qwen3.8-27b-gguf"
+        )
+        pi = next(
+            model
+            for model in load_json("clients/pi/models.template.json")["providers"]["litellm-edge"]["models"]
+            if model["id"] == "un/qwen3.8-27b-gguf"
+        )
+        opencode = load_json("clients/opencode/opencode.template.jsonc")["provider"]["litellm-edge"]["models"]["un/qwen3.8-27b-gguf"]
+
+        # Local cost must be explicitly null — not zero, not absent.
+        self.assertIn("localCostPerMillion", canonical)
+        self.assertIsNone(canonical["localCostPerMillion"])
+
+        # Legacy field must not appear on this model.
+        self.assertNotIn("costPerMillion", canonical)
+
+        # Hosted reference must be present with correct observed values.
+        hosted = canonical.get("hostedReferenceCostPerMillion")
+        self.assertIsNotNone(hosted)
+        self.assertTrue(hosted["source"].startswith("OpenRouter"))
+        # Exact provenance: URL must point to the correct qwen/qwen3.8-27b route
+        self.assertIn(
+            "https://openrouter.ai/qwen/qwen3.8-27b",
+            hosted["source"],
+            "hostedReferenceCostPerMillion source must reference the exact OpenRouter model URL",
+        )
+        # Exact evidence collection date
+        self.assertEqual(
+            hosted["retrievedDate"],
+            "2026-08-20",
+            "hostedReferenceCostPerMillion retrievedDate must reflect actual evidence collection date",
+        )
+        self.assertEqual(hosted["input"], 0.40)
+        self.assertEqual(hosted["output"], 3.00)
+        self.assertEqual(hosted["cacheRead"], 0.04)
+        self.assertIsNone(hosted["cacheWrite"])
+
+        # Rendered client templates must NOT expose cost (local cost unknown).
+        self.assertNotIn("cost", pi)
+        self.assertNotIn("cost", opencode)
+
     def test_all_agent_models_are_provider_qualified(self) -> None:
         pattern = re.compile(r"^litellm-edge/(?:an|cl|un)/")
         for path in (ROOT / "clients/opencode/agents").glob("*.md"):

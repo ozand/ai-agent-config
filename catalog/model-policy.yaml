@@ -53,6 +53,17 @@ metadata_policy:
     - client_configuration
   do_not_infer_missing_values: true
   pricing_unit: usd_per_million_tokens
+  cost_schema:
+    local_cost_field: localCostPerMillion
+    hosted_reference_field: hostedReferenceCostPerMillion
+    local_cost_required_evidence: power_tariff_throughput_and_hardware_amortization
+    rule: >
+      Set localCostPerMillion to null explicitly until verified local operating
+      cost data (power, tariff, throughput, hardware amortization) is collected
+      for this host. Do not use hosted/provider pricing as a proxy for local cost.
+      Store observed hosted provider prices under hostedReferenceCostPerMillion
+      with source URL and retrieval date for comparison only. Rendered client
+      templates must omit cost when localCostPerMillion is null.
 
 qwen38:
   route: un/qwen3.8-27b-gguf

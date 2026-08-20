@@ -237,12 +237,6 @@
           "input": [
             "text"
           ],
-          "cost": {
-            "input": 0.0,
-            "output": 0.0,
-            "cacheRead": 0.0,
-            "cacheWrite": 0.0
-          },
           "thinkingLevelMap": {
             "minimal": null,
             "low": "low",

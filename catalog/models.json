@@ -127,7 +127,17 @@
       "output": ["text"],
       "runtimeContextWindow": 98304,
       "piContextWindow": 73728,
-      "costPerMillion": {"input": 0.0, "output": 0.0, "cacheRead": 0.0, "cacheWrite": 0.0},
+      "localCostPerMillion": null,
+      "localCostNote": "Local operating cost is unknown. No verified power, tariff, throughput, or hardware-amortization data exists in this repository. Do not substitute the hosted reference price.",
+      "hostedReferenceCostPerMillion": {
+        "source": "OpenRouter (https://openrouter.ai/qwen/qwen3.8-27b)",
+        "retrievedDate": "2026-08-20",
+        "purpose": "Comparison reference only. Represents hosted inference pricing, not local operating cost.",
+        "input": 0.40,
+        "output": 3.00,
+        "cacheRead": 0.04,
+        "cacheWrite": null
+      },
       "piThinkingLevelMap": {"low": "low", "medium": "medium", "high": "xhigh"}
     }
   ]

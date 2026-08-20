@@ -43,6 +43,7 @@ OpenCode uses an environment reference in its template. Supply `LITELLM_EDGE_API
 ## Required checks before commit
 
 ```powershell
+python scripts/check_rendered.py
 python scripts/validate.py
 python -m unittest discover -s tests -v
 git diff --cached --check

@@ -75,6 +75,7 @@ Do not blindly overwrite an existing user configuration. Back it up outside Git,
 ### 4. Validate the repository
 
 ```powershell
+python scripts/check_rendered.py
 python -m unittest discover -s tests -v
 python scripts/validate.py
 ```

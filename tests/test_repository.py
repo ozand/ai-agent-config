@@ -15,6 +15,17 @@ def load_json(relative: str) -> dict:
 
 
 class RepositoryPolicyTests(unittest.TestCase):
+    def test_rendered_templates_are_current(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/check_rendered.py")],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Rendered client templates are current", result.stdout)
+
     def test_validate_script_passes(self) -> None:
         result = subprocess.run(
             [sys.executable, str(ROOT / "scripts/validate.py")],

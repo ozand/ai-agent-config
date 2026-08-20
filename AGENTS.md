@@ -33,6 +33,7 @@ It must not contain credentials, private runtime state, raw authenticated endpoi
 The repository requires Python 3.11 or newer. It has no third-party runtime dependencies.
 
 ```powershell
+python scripts/check_rendered.py
 python -m unittest discover -s tests -v
 python scripts/validate.py
 ```
@@ -42,6 +43,7 @@ python scripts/validate.py
 Run from the repository root:
 
 ```powershell
+python scripts/check_rendered.py
 python -m unittest discover -s tests -v
 python scripts/validate.py
 ```

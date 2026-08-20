@@ -17,6 +17,6 @@
 
 ## Future improvements
 
-- [ ] Add a dry-run installer that merges client sections without overwriting unrelated configuration.
+- [x] Add a dry-run installer that merges client sections without overwriting unrelated configuration.
 - [x] Add a renderer freshness check to CI after a remote repository exists.
 - [ ] Add Linux/macOS secret-reader examples after validating them on target hosts.

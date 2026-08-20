@@ -55,6 +55,15 @@ The variable must be supplied by a local secret manager or launcher. Do not stor
 
 ### 3. Install or merge client templates
 
+For a safe repository-local merge, use the standard-library installer. It is dry-run by default, preserves unrelated client configuration, and requires an explicit confirmation flag before applying:
+
+```powershell
+python scripts/install_config.py --client all
+python scripts/install_config.py --client all --apply --confirm-apply --backup-dir "$env:TEMP\ai-agent-config-backups"
+```
+
+Read [`docs/installer.md`](docs/installer.md) before applying. The tool never reads credential files and creates verified backups outside the repository.
+
 Pi templates:
 
 ```text
@@ -109,6 +118,7 @@ Recommended defaults:
 - [`docs/architecture.md`](docs/architecture.md) — ownership and data flow.
 - [`docs/secrets.md`](docs/secrets.md) — local secret-file and environment setup.
 - [`docs/update-and-rollback.md`](docs/update-and-rollback.md) — safe application workflow.
+- [`docs/installer.md`](docs/installer.md) — dry-run installer/merger usage, ownership, backup, and rollback.
 - [`docs/migration-receipt.md`](docs/migration-receipt.md) — sanitized bootstrap provenance.
 - [`catalog/README.md`](catalog/README.md) — canonical policy and catalog rules.
 - [`endpoints/README.md`](endpoints/README.md) — endpoint-profile contract.

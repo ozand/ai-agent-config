@@ -9,10 +9,11 @@
 - [x] Add Pi and OpenCode templates.
 - [x] Add local credential creation documentation.
 - [x] Add validation and regression tests.
-- [ ] Create the remote repository after explicit user authorization.
+- [x] Create and push the public remote repository `ozand/ai-agent-config`.
 - [x] Add CI validation and rendered-template freshness checks.
-- [ ] Establish native issue governance in the new remote repository.
-- [ ] Migrate future model-policy changes from bootstrap tracking Issue `ozand/servers_team#181`.
+- [x] Establish native issue governance in the new remote repository.
+- [x] Record the next installer/merger increment as repository Issue #1.
+- [ ] Close bootstrap tracking Issue `ozand/servers_team#181` after final migration receipt verification.
 
 ## Future improvements
 

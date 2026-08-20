@@ -113,6 +113,11 @@ Recommended defaults:
 - [`catalog/README.md`](catalog/README.md) — canonical policy and catalog rules.
 - [`endpoints/README.md`](endpoints/README.md) — endpoint-profile contract.
 
-## Status
+## Repository and governance
 
-Initial standalone bootstrap is governed by `ozand/servers_team` Issue #181 and derives current policy boundaries from Issues #143 and #180.
+- Repository: `https://github.com/ozand/ai-agent-config`
+- Bootstrap tracking: `ozand/servers_team` Issue #181
+- Next native increment: `ozand/ai-agent-config` Issue #1
+- Policy dependencies: `ozand/servers_team` Issues #143 and #180
+
+GitHub Actions runs rendered-template freshness, policy validation, unit tests, and secret-hygiene checks on pushes and pull requests.

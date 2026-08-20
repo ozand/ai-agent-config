@@ -2,8 +2,11 @@
 
 ## Bootstrap
 
-- New local repository: `T:/Code/ai-agent-config`
+- Local repository: `T:/Code/ai-agent-config`
+- Remote repository: `https://github.com/ozand/ai-agent-config`
+- Default branch: `main`
 - Bootstrap governance: `ozand/servers_team` Issue #181
+- Native follow-up governance: `ozand/ai-agent-config` Issue #1
 - Pi credential/model boundary: `ozand/servers_team` Issue #143
 - OpenCode/Pi catalog synchronization boundary: `ozand/servers_team` Issue #180
 
@@ -33,9 +36,10 @@ The standalone repository records:
 
 ## Ownership after bootstrap
 
-- This repository owns reusable sanitized client policy and templates.
-- `servers_team` retains infrastructure deployment and issue history.
+- This repository owns reusable sanitized client policy, templates, validation, and future client-configuration issues.
+- `servers_team` retains infrastructure deployment and historical bootstrap issues.
 - Local secret files and activated user configs remain local-only.
+- GitHub Actions validates rendered-template freshness, policy, catalog parity, tests, and secret hygiene on pushes and pull requests.
 
 ## Rollback
 

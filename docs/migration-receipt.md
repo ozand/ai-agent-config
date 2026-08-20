@@ -5,7 +5,7 @@
 - Local repository: `T:/Code/ai-agent-config`
 - Remote repository: `https://github.com/ozand/ai-agent-config`
 - Default branch: `main`
-- Bootstrap governance: `ozand/servers_team` Issue #181
+- Bootstrap governance: `ozand/servers_team` Issue #181 (completed and closed)
 - Native follow-up governance: `ozand/ai-agent-config` Issue #1
 - Pi credential/model boundary: `ozand/servers_team` Issue #143
 - OpenCode/Pi catalog synchronization boundary: `ozand/servers_team` Issue #180

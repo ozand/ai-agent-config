@@ -3,369 +3,142 @@
   "endpoint": "litellm-edge",
   "models": [
     {
-      "id": "an/claude-opus-4-6-thinking",
-      "contextWindow": 1000000,
-      "maxTokens": 64000,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high"
-      }
+      "id": "an/claude-haiku-4-5-20251001",
+      "name": "Claude Haiku 4.5",
+      "category": "chat",
+      "providerFamily": "an"
+    },
+    {
+      "id": "an/claude-opus-4-6",
+      "name": "Claude Opus 4.6",
+      "category": "chat",
+      "providerFamily": "an"
     },
     {
       "id": "an/claude-sonnet-4-6",
-      "contextWindow": 1000000,
-      "maxTokens": 64000
-    },
-    {
-      "id": "an/claude-sonnet-4-6-thinking",
-      "contextWindow": 1000000,
+      "name": "Claude Sonnet 4.6",
+      "category": "chat",
+      "providerFamily": "an",
+      "reasoning": true,
+      "input": ["text", "image"],
+      "output": ["text"],
+      "contextWindow": 200000,
       "maxTokens": 64000,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high"
+      "costPerMillion": {
+        "input": 3.0,
+        "output": 15.0,
+        "cacheRead": 0.3,
+        "cacheWrite": 3.75
       }
     },
-    {
-      "id": "an/gemini-2.5-flash-thinking",
-      "contextWindow": 1048576,
-      "maxTokens": 65536,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high"
-      }
-    },
-    {
-      "id": "an/gemini-3-flash",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3-flash-agent",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3.1-pro-high",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
+    {"id": "an/gemini-3-pro-image", "name": "Gemini 3 Pro Image", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-16x9", "name": "Gemini 3 Pro Image 16x9", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-1x1", "name": "Gemini 3 Pro Image 1x1", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-21x9", "name": "Gemini 3 Pro Image 21x9", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-2k", "name": "Gemini 3 Pro Image 2K", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-2k-16x9", "name": "Gemini 3 Pro Image 2K 16x9", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-2k-1x1", "name": "Gemini 3 Pro Image 2K 1x1", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-2k-21x9", "name": "Gemini 3 Pro Image 2K 21x9", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-2k-3x4", "name": "Gemini 3 Pro Image 2K 3x4", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-2k-4x3", "name": "Gemini 3 Pro Image 2K 4x3", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-2k-9x16", "name": "Gemini 3 Pro Image 2K 9x16", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-3x4", "name": "Gemini 3 Pro Image 3x4", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4k", "name": "Gemini 3 Pro Image 4K", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4k-16x9", "name": "Gemini 3 Pro Image 4K 16x9", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4k-1x1", "name": "Gemini 3 Pro Image 4K 1x1", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4k-21x9", "name": "Gemini 3 Pro Image 4K 21x9", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4k-3x4", "name": "Gemini 3 Pro Image 4K 3x4", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4k-4x3", "name": "Gemini 3 Pro Image 4K 4x3", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4k-9x16", "name": "Gemini 3 Pro Image 4K 9x16", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-4x3", "name": "Gemini 3 Pro Image 4x3", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3-pro-image-9x16", "name": "Gemini 3 Pro Image 9x16", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3.1-flash-image", "name": "Gemini 3.1 Flash Image", "category": "image-generation", "providerFamily": "an"},
+    {"id": "an/gemini-3.1-pro", "name": "Gemini 3.1 Pro", "category": "chat", "providerFamily": "an"},
+    {"id": "an/gemini-3.1-pro-high", "name": "Gemini 3.1 Pro High", "category": "chat", "providerFamily": "an", "reasoning": true},
     {
       "id": "an/gemini-3.1-pro-low",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3.5-flash-extra-low",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3.5-flash-high",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3.5-flash-low",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3.6-flash-high",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3.6-flash-low",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-3.6-flash-tiered",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/gemini-pro-agent",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/tab-flash-lite-preview",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "an/tab-jump-flash-lite-preview",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/claude-3-7-sonnet-20250219",
-      "contextWindow": 200000,
-      "maxTokens": 64000
-    },
-    {
-      "id": "cl/claude-opus-4-6",
-      "contextWindow": 1000000,
-      "maxTokens": 64000
-    },
-    {
-      "id": "cl/claude-opus-4-6-thinking",
-      "contextWindow": 1000000,
-      "maxTokens": 128000,
+      "name": "Gemini 3.1 Pro Low",
+      "category": "chat",
+      "providerFamily": "an",
       "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high"
-      }
+      "costPerMillion": {"input": 2.0, "output": 12.0}
     },
+    {"id": "an/gemini-3.7-flash-high", "name": "Gemini 3.7 Flash High", "category": "chat", "providerFamily": "an", "reasoning": true},
     {
-      "id": "cl/claude-opus-4-7",
-      "contextWindow": 1000000,
-      "maxTokens": 64000
-    },
-    {
-      "id": "cl/claude-sonnet-4-6",
-      "contextWindow": 1000000,
-      "maxTokens": 64000
-    },
-    {
-      "id": "cl/codex-auto-review",
-      "contextWindow": 2000000,
-      "maxTokens": 30000
-    },
-    {
-      "id": "cl/gemini-2.5-flash",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-2.5-flash-lite",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-2.5-pro",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3-flash-preview",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3-pro-high",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3-pro-low",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3-pro-preview",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3.1-flash-lite",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3.1-pro-preview",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3.5-flash-extra-low",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gemini-3.5-flash-low",
-      "contextWindow": 1048576,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/gpt-5.3-codex",
-      "contextWindow": 272000,
-      "maxTokens": 128000,
+      "id": "an/gemini-3.7-flash-low",
+      "name": "Gemini 3.7 Flash Low",
+      "category": "chat",
+      "providerFamily": "an",
       "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
+      "costPerMillion": {"input": 0.75, "output": 3.75}
     },
+    {"id": "an/gemini-3.7-flash-medium", "name": "Gemini 3.7 Flash Medium", "category": "chat", "providerFamily": "an", "reasoning": true},
+    {"id": "an/gpt-oss-120b-medium", "name": "GPT-OSS 120B Medium", "category": "chat", "providerFamily": "an"},
+    {"id": "cl/gemini-3.1-flash-image", "name": "Gemini 3.1 Flash Image", "category": "image-generation", "providerFamily": "cl"},
     {
-      "contextWindow": 272000,
-      "id": "cl/gpt-5.3-codex-spark",
-      "maxTokens": 16384,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
-    },
-    {
-      "id": "cl/gpt-5.4",
-      "contextWindow": 272000,
-      "maxTokens": 128000,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
-    },
-    {
-      "id": "cl/gpt-5.4-mini",
-      "contextWindow": 272000,
-      "maxTokens": 128000,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
-    },
-    {
-      "id": "cl/gpt-5.5",
-      "contextWindow": 272000,
-      "maxTokens": 128000,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
-    },
-    {
-      "contextWindow": 272000,
       "id": "cl/gpt-5.6-luna",
-      "maxTokens": 128000,
+      "name": "GPT-5.6 Luna",
+      "category": "chat",
+      "providerFamily": "cl",
       "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
+      "input": ["text", "image"],
+      "output": ["text"],
+      "contextWindow": 1050000,
+      "maxTokens": 128000,
+      "costPerMillion": {"input": 0.2, "output": 1.2, "cacheRead": 0.02, "cacheWrite": 0.25},
+      "reasoningVariants": ["low", "medium", "high", "xhigh"]
     },
     {
-      "contextWindow": 272000,
       "id": "cl/gpt-5.6-sol",
-      "maxTokens": 128000,
+      "name": "GPT-5.6 Sol",
+      "category": "chat",
+      "providerFamily": "cl",
       "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
+      "input": ["text", "image"],
+      "output": ["text"],
+      "contextWindow": 1050000,
+      "maxTokens": 128000,
+      "costPerMillion": {"input": 5.0, "output": 30.0, "cacheRead": 0.5, "cacheWrite": 6.25},
+      "reasoningVariants": ["low", "medium", "high", "xhigh"]
     },
     {
-      "contextWindow": 272000,
       "id": "cl/gpt-5.6-terra",
+      "name": "GPT-5.6 Terra",
+      "category": "chat",
+      "providerFamily": "cl",
+      "reasoning": true,
+      "input": ["text", "image"],
+      "output": ["text"],
+      "contextWindow": 1050000,
       "maxTokens": 128000,
+      "costPerMillion": {"input": 2.0, "output": 12.0, "cacheRead": 0.2, "cacheWrite": 2.5},
+      "reasoningVariants": ["low", "medium", "high", "xhigh"]
+    },
+    {"id": "cl/gpt-image-1.5", "name": "GPT Image 1.5", "category": "image-generation", "providerFamily": "cl"},
+    {"id": "cl/gpt-image-2", "name": "GPT Image 2", "category": "image-generation", "providerFamily": "cl"},
+    {"id": "un/gpt-oss-20b-GGUF", "name": "GPT-OSS 20B GGUF", "category": "chat", "providerFamily": "un"},
+    {
+      "id": "un/qwen3.8-27b-gguf",
+      "name": "Qwen3.8 27B GGUF",
+      "category": "chat",
+      "providerFamily": "un",
       "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high",
-        "off": null
-      }
-    },
-    {
-      "id": "cl/gpt-oss-120b-medium",
-      "contextWindow": 131072,
-      "maxTokens": 40960
-    },
-    {
-      "id": "cl/kimi-k2-thinking",
-      "contextWindow": 262144,
-      "maxTokens": 65536,
-      "reasoning": true,
-      "thinkingLevelMap": {
-        "minimal": "low",
-        "low": "low",
-        "medium": "medium",
-        "high": "high",
-        "xhigh": "high",
-        "max": "high"
-      }
-    },
-    {
-      "id": "cl/kimi-k2.5",
-      "contextWindow": 262144,
-      "maxTokens": 65536
-    },
-    {
-      "id": "cl/kimi-k2.6",
-      "contextWindow": 262144,
-      "maxTokens": 65536
-    },
-    {
-      "id": "un/gpt-oss-20b-GGUF",
-      "contextWindow": 128000,
-      "maxTokens": 16384
-    },
-    {
-      "id": "un/qwen3.6-27b-mtp",
-      "contextWindow": 131072,
-      "maxTokens": 65536
+      "input": ["text"],
+      "output": ["text"],
+      "runtimeContextWindow": 98304,
+      "piContextWindow": 73728,
+      "localCostPerMillion": null,
+      "localCostNote": "Local operating cost is unknown. No verified power, tariff, throughput, or hardware-amortization data exists in this repository. Do not substitute the hosted reference price.",
+      "hostedReferenceCostPerMillion": {
+        "source": "OpenRouter (https://openrouter.ai/qwen/qwen3.8-27b)",
+        "retrievedDate": "2026-08-20",
+        "purpose": "Comparison reference only. Represents hosted inference pricing, not local operating cost.",
+        "input": 0.40,
+        "output": 3.00,
+        "cacheRead": 0.04,
+        "cacheWrite": null
+      },
+      "piThinkingLevelMap": {"low": "low", "medium": "medium", "high": "xhigh"}
     }
   ]
 }

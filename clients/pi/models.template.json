@@ -139,13 +139,13 @@
           }
         },
         {
-          "id": "an/gemini-3.7-flash-high",
-          "name": "Gemini 3.7 Flash High",
+          "id": "an/gemini-3.8-flash-high",
+          "name": "Gemini 3.8 Flash High",
           "reasoning": true
         },
         {
-          "id": "an/gemini-3.7-flash-low",
-          "name": "Gemini 3.7 Flash Low",
+          "id": "an/gemini-3.8-flash-low",
+          "name": "Gemini 3.8 Flash Low",
           "reasoning": true,
           "cost": {
             "input": 0.75,
@@ -155,8 +155,8 @@
           }
         },
         {
-          "id": "an/gemini-3.7-flash-medium",
-          "name": "Gemini 3.7 Flash Medium",
+          "id": "an/gemini-3.8-flash-medium",
+          "name": "Gemini 3.8 Flash Medium",
           "reasoning": true
         },
         {

@@ -219,6 +219,23 @@
           }
         },
         {
+          "id": "cl/gpt-6-astra",
+          "name": "GPT-6 Astra",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1050000,
+          "maxTokens": 128000,
+          "cost": {
+            "input": 10.0,
+            "output": 50.0,
+            "cacheRead": 1.0,
+            "cacheWrite": 12.5
+          }
+        },
+        {
           "id": "cl/gpt-image-1.5",
           "name": "GPT Image 1.5"
         },

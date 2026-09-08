@@ -46,7 +46,7 @@ class RepositoryPolicyTests(unittest.TestCase):
         opencode = set(
             load_json("clients/opencode/opencode.template.jsonc")["provider"]["litellm-edge"]["models"]
         )
-        self.assertEqual(len(canonical), 40)
+        self.assertEqual(len(canonical), 41)
         self.assertEqual(canonical, pi)
         self.assertEqual(canonical, opencode)
 

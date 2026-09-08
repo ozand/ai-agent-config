@@ -32,8 +32,7 @@
       "costPerMillion": {
         "input": 3.0,
         "output": 15.0,
-        "cacheRead": 0.3,
-        "cacheWrite": 3.75
+        "cacheConflictNote": "Endpoint returned null/absent cache prices on 2026-09-08; cache pricing remains unknown and is intentionally omitted from client templates. See docs/endpoint-evidence-receipt-2026-09-08.md."
       }
     },
     {
@@ -242,7 +241,7 @@
       "output": [
         "text"
       ],
-      "contextWindow": 1050000,
+      "contextWindow": 922000,
       "maxTokens": 128000,
       "costPerMillion": {
         "input": 0.2,
@@ -255,7 +254,9 @@
         "medium",
         "high",
         "xhigh"
-      ]
+      ],
+      "providerContextWindow": 1050000,
+      "contextWindowConflict": "Endpoint reported max_input_tokens=922000 on 2026-09-08; provider documentation records 1050000 while the authenticated proxy reports 922000. The client-safe limit is set to 922000; providerContextWindow retains 1050000. See docs/endpoint-evidence-receipt-2026-09-08.md."
     },
     {
       "id": "cl/gpt-5.6-sol",
@@ -270,20 +271,22 @@
       "output": [
         "text"
       ],
-      "contextWindow": 1050000,
+      "contextWindow": 922000,
       "maxTokens": 128000,
       "costPerMillion": {
         "input": 5.0,
         "output": 30.0,
-        "cacheRead": 0.5,
-        "cacheWrite": 6.25
+        "cacheRead": 0.4,
+        "cacheWrite": 5.0
       },
       "reasoningVariants": [
         "low",
         "medium",
         "high",
         "xhigh"
-      ]
+      ],
+      "providerContextWindow": 1050000,
+      "contextWindowConflict": "Endpoint reported max_input_tokens=922000 on 2026-09-08; provider documentation records 1050000 while the authenticated proxy reports 922000. The client-safe limit is set to 922000; providerContextWindow retains 1050000. See docs/endpoint-evidence-receipt-2026-09-08.md."
     },
     {
       "id": "cl/gpt-5.6-terra",
@@ -298,7 +301,7 @@
       "output": [
         "text"
       ],
-      "contextWindow": 1050000,
+      "contextWindow": 922000,
       "maxTokens": 128000,
       "costPerMillion": {
         "input": 2.0,
@@ -311,7 +314,9 @@
         "medium",
         "high",
         "xhigh"
-      ]
+      ],
+      "providerContextWindow": 1050000,
+      "contextWindowConflict": "Endpoint reported max_input_tokens=922000 on 2026-09-08; provider documentation records 1050000 while the authenticated proxy reports 922000. The client-safe limit is set to 922000; providerContextWindow retains 1050000. See docs/endpoint-evidence-receipt-2026-09-08.md."
     },
     {
       "id": "cl/gpt-6-astra",

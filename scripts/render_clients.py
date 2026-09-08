@@ -31,6 +31,7 @@ def pi_model(model: dict) -> dict:
     for source, target in (
         ("reasoning", "reasoning"),
         ("input", "input"),
+        ("output", "output"),
         ("contextWindow", "contextWindow"),
         ("maxTokens", "maxTokens"),
     ):
@@ -45,17 +46,19 @@ def pi_model(model: dict) -> dict:
         result["cost"] = {
             "input": local_cost["input"],
             "output": local_cost["output"],
-            "cacheRead": local_cost.get("cacheRead", 0.0),
-            "cacheWrite": local_cost.get("cacheWrite", 0.0),
         }
+        for source, target in (("cacheRead", "cacheRead"), ("cacheWrite", "cacheWrite")):
+            if source in local_cost and local_cost[source] is not None:
+                result["cost"][target] = local_cost[source]
     elif "costPerMillion" in model:
         cost = model["costPerMillion"]
         result["cost"] = {
             "input": cost["input"],
             "output": cost["output"],
-            "cacheRead": cost.get("cacheRead", 0.0),
-            "cacheWrite": cost.get("cacheWrite", 0.0),
         }
+        for source, target in (("cacheRead", "cacheRead"), ("cacheWrite", "cacheWrite")):
+            if source in cost and cost[source] is not None:
+                result["cost"][target] = cost[source]
 
     if model["id"] == "un/qwen3.8-27b-gguf":
         result.update(
@@ -102,16 +105,16 @@ def opencode_model(model: dict) -> dict:
     if model["id"] != "un/qwen3.8-27b-gguf":
         if local_cost is not None:
             result["cost"] = {"input": local_cost["input"], "output": local_cost["output"]}
-            if "cacheRead" in local_cost:
+            if "cacheRead" in local_cost and local_cost["cacheRead"] is not None:
                 result["cost"]["cache_read"] = local_cost["cacheRead"]
-            if "cacheWrite" in local_cost:
+            if "cacheWrite" in local_cost and local_cost["cacheWrite"] is not None:
                 result["cost"]["cache_write"] = local_cost["cacheWrite"]
         elif "costPerMillion" in model:
             cost = model["costPerMillion"]
             result["cost"] = {"input": cost["input"], "output": cost["output"]}
-            if "cacheRead" in cost:
+            if "cacheRead" in cost and cost["cacheRead"] is not None:
                 result["cost"]["cache_read"] = cost["cacheRead"]
-            if "cacheWrite" in cost:
+            if "cacheWrite" in cost and cost["cacheWrite"] is not None:
                 result["cost"]["cache_write"] = cost["cacheWrite"]
     if "reasoningVariants" in model:
         result["variants"] = {
@@ -119,11 +122,10 @@ def opencode_model(model: dict) -> dict:
             for variant in model["reasoningVariants"]
         }
     if model["id"] == "un/qwen3.8-27b-gguf":
-        result = {
-            "name": model["name"],
-            "reasoning": True,
-            "modalities": {"input": ["text"]},
-        }
+        result["reasoning"] = True
+        result["modalities"] = {"input": ["text"], "output": ["text"]}
+        result.pop("limit", None)
+        result.pop("cost", None)
     return result
 
 

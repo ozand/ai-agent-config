@@ -36,9 +36,7 @@
           },
           "cost": {
             "input": 3.0,
-            "output": 15.0,
-            "cache_read": 0.3,
-            "cache_write": 3.75
+            "output": 15.0
           }
         },
         "an/gemini-3-pro-image": {
@@ -122,20 +120,20 @@
             "output": 12.0
           }
         },
-        "an/gemini-3.7-flash-high": {
-          "name": "Gemini 3.7 Flash High",
+        "an/gemini-3.8-flash-high": {
+          "name": "Gemini 3.8 Flash High",
           "reasoning": true
         },
-        "an/gemini-3.7-flash-low": {
-          "name": "Gemini 3.7 Flash Low",
+        "an/gemini-3.8-flash-low": {
+          "name": "Gemini 3.8 Flash Low",
           "reasoning": true,
           "cost": {
             "input": 0.75,
             "output": 3.75
           }
         },
-        "an/gemini-3.7-flash-medium": {
-          "name": "Gemini 3.7 Flash Medium",
+        "an/gemini-3.8-flash-medium": {
+          "name": "Gemini 3.8 Flash Medium",
           "reasoning": true
         },
         "an/gpt-oss-120b-medium": {
@@ -148,7 +146,7 @@
           "name": "GPT-5.6 Luna",
           "reasoning": true,
           "limit": {
-            "context": 1050000,
+            "context": 922000,
             "output": 128000
           },
           "modalities": {
@@ -185,7 +183,7 @@
           "name": "GPT-5.6 Sol",
           "reasoning": true,
           "limit": {
-            "context": 1050000,
+            "context": 922000,
             "output": 128000
           },
           "modalities": {
@@ -200,8 +198,8 @@
           "cost": {
             "input": 5.0,
             "output": 30.0,
-            "cache_read": 0.5,
-            "cache_write": 6.25
+            "cache_read": 0.4,
+            "cache_write": 5.0
           },
           "variants": {
             "low": {
@@ -222,7 +220,7 @@
           "name": "GPT-5.6 Terra",
           "reasoning": true,
           "limit": {
-            "context": 1050000,
+            "context": 922000,
             "output": 128000
           },
           "modalities": {
@@ -255,6 +253,29 @@
             }
           }
         },
+        "cl/gpt-6-astra": {
+          "name": "GPT-6 Astra",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "cost": {
+            "input": 10.0,
+            "output": 50.0,
+            "cache_read": 1.0,
+            "cache_write": 12.5
+          }
+        },
         "cl/gpt-image-1.5": {
           "name": "GPT Image 1.5"
         },
@@ -269,6 +290,9 @@
           "reasoning": true,
           "modalities": {
             "input": [
+              "text"
+            ],
+            "output": [
               "text"
             ]
           }

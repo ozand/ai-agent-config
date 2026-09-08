@@ -6,6 +6,24 @@ small_model: litellm-edge/an/gemini-3.7-flash-low
 pi_thinking_level: low
 policy: catalog/model-policy.yaml
 agent_routing: catalog/agent-routing.yaml
+compaction:
+  pi_strategy: fixed_threshold
+  pi_threshold_tokens: 272000
+  pi_reserve_tokens: 16384
+  pi_keep_recent_tokens: 20000
+  pi_note: >
+    Pi applies auto-compaction after 272000 tokens for models whose context window
+    exceeds that threshold. Smaller-context models are not compacted by this extension.
+    This is an intentionally conservative fixed threshold. The live runtime may use
+    a higher threshold (e.g. 560000) for large-context routes, but this repository
+    does not adopt that value without a deliberate policy decision.
+    Extension: ~/.pi/agent/extensions/auto-compact-272k.ts
+  opencode_strategy: model_specific_dcp
+  opencode_note: >
+    OpenCode uses agent-specific DCP (Dynamic Context Pruning) ranges that vary by
+    model capability. These are intentionally different from Pi's fixed-threshold
+    strategy. Pi and OpenCode are separate client strategies, not conflicting policies.
 notes:
   - Role-specific agent routing remains authoritative over the interactive default.
-  - Pi auto-compaction applies after 272000 tokens only for models advertising a larger context window.
+  - Pi auto-compaction applies a fixed 272000-token threshold to models whose context window exceeds it; this is intentionally conservative.
+  - OpenCode DCP uses model-specific ranges; do not conflate with Pi compaction threshold.

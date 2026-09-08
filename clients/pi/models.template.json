@@ -21,13 +21,14 @@
             "text",
             "image"
           ],
+          "output": [
+            "text"
+          ],
           "contextWindow": 200000,
           "maxTokens": 64000,
           "cost": {
             "input": 3.0,
-            "output": 15.0,
-            "cacheRead": 0.3,
-            "cacheWrite": 3.75
+            "output": 15.0
           }
         },
         {
@@ -133,9 +134,7 @@
           "reasoning": true,
           "cost": {
             "input": 2.0,
-            "output": 12.0,
-            "cacheRead": 0.0,
-            "cacheWrite": 0.0
+            "output": 12.0
           }
         },
         {
@@ -149,9 +148,7 @@
           "reasoning": true,
           "cost": {
             "input": 0.75,
-            "output": 3.75,
-            "cacheRead": 0.0,
-            "cacheWrite": 0.0
+            "output": 3.75
           }
         },
         {
@@ -175,7 +172,10 @@
             "text",
             "image"
           ],
-          "contextWindow": 1050000,
+          "output": [
+            "text"
+          ],
+          "contextWindow": 922000,
           "maxTokens": 128000,
           "cost": {
             "input": 0.2,
@@ -192,13 +192,16 @@
             "text",
             "image"
           ],
-          "contextWindow": 1050000,
+          "output": [
+            "text"
+          ],
+          "contextWindow": 922000,
           "maxTokens": 128000,
           "cost": {
             "input": 5.0,
             "output": 30.0,
-            "cacheRead": 0.5,
-            "cacheWrite": 6.25
+            "cacheRead": 0.4,
+            "cacheWrite": 5.0
           }
         },
         {
@@ -209,7 +212,10 @@
             "text",
             "image"
           ],
-          "contextWindow": 1050000,
+          "output": [
+            "text"
+          ],
+          "contextWindow": 922000,
           "maxTokens": 128000,
           "cost": {
             "input": 2.0,
@@ -225,6 +231,9 @@
           "input": [
             "text",
             "image"
+          ],
+          "output": [
+            "text"
           ],
           "contextWindow": 1050000,
           "maxTokens": 128000,
@@ -252,6 +261,9 @@
           "name": "Qwen3.8 27B GGUF",
           "reasoning": true,
           "input": [
+            "text"
+          ],
+          "output": [
             "text"
           ],
           "thinkingLevelMap": {

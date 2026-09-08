@@ -82,11 +82,31 @@ def model_ids() -> tuple[set[str], set[str], set[str]]:
 
 
 def validate_catalog_parity() -> None:
+    canonical = load_json(ROOT / "catalog/models.json")
+    pi = load_json(ROOT / "clients/pi/models.template.json")
+    opencode = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
     canonical_ids, pi_ids, opencode_ids = model_ids()
-    if len(canonical_ids) != 40:
-        fail(f"Canonical catalog must contain 40 unique IDs, found {len(canonical_ids)}")
+    if len(canonical_ids) != 41:
+        fail(f"Canonical catalog must contain 41 unique IDs, found {len(canonical_ids)}")
     if canonical_ids != pi_ids or canonical_ids != opencode_ids:
         fail("Canonical, Pi, and OpenCode model ID sets differ")
+    pi_by_id = {model["id"]: model for model in pi["providers"]["litellm-edge"]["models"]}
+    oc_by_id = opencode["provider"]["litellm-edge"]["models"]
+    for model in canonical["models"]:
+        mid = model["id"]
+        if mid.startswith("cl/gpt-5.6-"):
+            if model.get("contextWindow") != 922000 or model.get("providerContextWindow") != 1050000:
+                fail(f"GPT-5.6 context limits must separate proxy 922000 and provider 1050000: {mid}")
+            if pi_by_id[mid].get("contextWindow") != 922000:
+                fail(f"Pi must use proxy-safe GPT-5.6 context limit: {mid}")
+            if oc_by_id[mid].get("limit", {}).get("context") != 922000:
+                fail(f"OpenCode must use proxy-safe GPT-5.6 context limit: {mid}")
+    sonnet = next(model for model in canonical["models"] if model["id"] == "an/claude-sonnet-4-6")
+    if "cacheRead" in sonnet.get("costPerMillion", {}) or "cacheWrite" in sonnet.get("costPerMillion", {}):
+        fail("Sonnet cache prices are unknown and must not be active")
+    for rendered in (pi_by_id["an/claude-sonnet-4-6"], oc_by_id["an/claude-sonnet-4-6"]):
+        if "cost" in rendered and any(key in rendered["cost"] for key in ("cacheRead", "cacheWrite", "cache_read", "cache_write")):
+            fail("Unknown Sonnet cache prices must not be rendered")
 
 
 def validate_defaults() -> None:

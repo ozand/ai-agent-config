@@ -1,6 +1,6 @@
 {
   "defaultProvider": "litellm-edge",
-  "defaultModel": "cl/gpt-5.6-luna",
+  "defaultModel": "cl/gpt-6-luna",
   "defaultThinkingLevel": "low",
   "enabledModels": [
     "cl/*",
@@ -42,7 +42,7 @@
   "subagents": {
     "agentOverrides": {
       "scout": {
-        "model": "litellm-edge/cl/gpt-5.6-luna",
+        "model": "litellm-edge/cl/gpt-6-luna",
         "fallbackModels": [
           "litellm-edge/an/gemini-3.7-flash-low",
           "litellm-edge/cl/gpt-5.6-terra"
@@ -59,7 +59,7 @@
         "model": "litellm-edge/an/claude-opus-4-6",
         "fallbackModels": [
           "litellm-edge/an/gemini-3.1-pro-high",
-          "litellm-edge/cl/gpt-5.6-sol"
+          "litellm-edge/cl/gpt-6-sol"
         ]
       },
       "worker": {
@@ -73,7 +73,7 @@
         "model": "litellm-edge/an/claude-opus-4-6",
         "fallbackModels": [
           "litellm-edge/an/gemini-3.1-pro-high",
-          "litellm-edge/cl/gpt-5.6-sol"
+          "litellm-edge/cl/gpt-6-sol"
         ]
       },
       "delegate": {

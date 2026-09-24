@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "litellm-edge/cl/gpt-5.6-luna",
+  "model": "litellm-edge/cl/gpt-6-luna",
   "small_model": "litellm-edge/an/gemini-3.7-flash-low",
   "default_agent": "orchestrator",
   "provider": {
@@ -142,8 +142,8 @@
         "cl/gemini-3.1-flash-image": {
           "name": "Gemini 3.1 Flash Image"
         },
-        "cl/gpt-5.6-luna": {
-          "name": "GPT-5.6 Luna",
+        "cl/gpt-6-luna": {
+          "name": "GPT-6 Luna",
           "reasoning": true,
           "limit": {
             "context": 922000,
@@ -159,10 +159,10 @@
             ]
           },
           "cost": {
-            "input": 0.2,
-            "output": 1.2,
-            "cache_read": 0.02,
-            "cache_write": 0.25
+            "input": 2.0,
+            "output": 12.0,
+            "cache_read": 0.01,
+            "cache_write": 0.125
           },
           "variants": {
             "low": {
@@ -179,8 +179,8 @@
             }
           }
         },
-        "cl/gpt-5.6-sol": {
-          "name": "GPT-5.6 Sol",
+        "cl/gpt-6-sol": {
+          "name": "GPT-6 Sol",
           "reasoning": true,
           "limit": {
             "context": 922000,
@@ -198,8 +198,8 @@
           "cost": {
             "input": 5.0,
             "output": 30.0,
-            "cache_read": 0.4,
-            "cache_write": 5.0
+            "cache_read": 0.2,
+            "cache_write": 2.5
           },
           "variants": {
             "low": {
@@ -304,7 +304,7 @@
     "orchestrator": {
       "description": "Orchestration-first primary agent: coordinates multi-step execution through subagents, keeps todo state synchronized, and avoids overengineering.",
       "mode": "primary",
-      "model": "litellm-edge/cl/gpt-5.6-luna",
+      "model": "litellm-edge/cl/gpt-6-luna",
       "variant": "medium",
       "temperature": 0,
       "steps": 90,
@@ -325,7 +325,7 @@
     "build": {
       "description": "Coding-first primary agent optimized for fast, high-quality implementation work.",
       "mode": "primary",
-      "model": "litellm-edge/cl/gpt-5.6-luna",
+      "model": "litellm-edge/cl/gpt-6-luna",
       "steps": 60,
       "permission": {
         "task": {

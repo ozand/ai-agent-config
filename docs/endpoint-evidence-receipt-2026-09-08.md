@@ -194,3 +194,15 @@ Every approved canonical ID was checked against the fresh endpoint listing. All 
 - Issue: `ozand/ai-agent-config` Issue #3
 - Repository: `ozand/ai-agent-config`
 - Prior receipt: `docs/migration-receipt.md`
+
+
+## Migration to GPT-6 Luna and GPT-6 Sol (2026-09-09)
+
+The LiteLLM edge proxy (`https://litellm.ayga.tech/v1`) updated upstream routing to redirect `gpt-5.6-luna` and `gpt-5.6-sol` requests to `cl/gpt-6-luna` and `cl/gpt-6-sol` via `model_group_alias`. Both endpoints are active and verified:
+
+| Model ID | Input Cost (×1M) | Output Cost (×1M) | Cache Read (×1M) | Cache Creation (×1M) | Context Limit (Proxy) | Provider Limit |
+|---|---|---|---|---|---|---|
+| `cl/gpt-6-luna` | 2.0 | 12.0 | 0.01 | 0.125 | 922,000 | 1,050,000 |
+| `cl/gpt-6-sol` | 5.0 | 30.0 | 0.20 | 2.50 | 922,000 | 1,050,000 |
+
+Client templates, default profiles, agent routing, and validation suites have been updated to target `cl/gpt-6-luna` and `cl/gpt-6-sol` directly.

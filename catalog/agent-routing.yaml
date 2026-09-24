@@ -2,7 +2,7 @@ schema_version: 1
 
 pi:
   scout:
-    primary: litellm-edge/cl/gpt-5.6-luna
+    primary: litellm-edge/cl/gpt-6-luna
     fallbacks:
       - litellm-edge/an/gemini-3.8-flash-low
       - litellm-edge/cl/gpt-5.6-terra
@@ -15,7 +15,7 @@ pi:
     primary: litellm-edge/an/claude-opus-4-6
     fallbacks:
       - litellm-edge/an/gemini-3.1-pro-high
-      - litellm-edge/cl/gpt-5.6-sol
+      - litellm-edge/cl/gpt-6-sol
   worker:
     primary: litellm-edge/an/claude-sonnet-4-6
     fallbacks:
@@ -25,7 +25,7 @@ pi:
     primary: litellm-edge/an/claude-opus-4-6
     fallbacks:
       - litellm-edge/an/gemini-3.1-pro-high
-      - litellm-edge/cl/gpt-5.6-sol
+      - litellm-edge/cl/gpt-6-sol
   delegate:
     primary: litellm-edge/an/gemini-3.8-flash-high
     fallbacks:
@@ -33,12 +33,12 @@ pi:
       - litellm-edge/cl/gpt-5.6-terra
 
 opencode:
-  orchestrator: litellm-edge/cl/gpt-5.6-luna
-  build: litellm-edge/cl/gpt-5.6-luna
+  orchestrator: litellm-edge/cl/gpt-6-luna
+  build: litellm-edge/cl/gpt-6-luna
   plan: litellm-edge/an/claude-sonnet-4-6
   explore: litellm-edge/an/gemini-3.8-flash-low
   docs_writer: litellm-edge/an/gemini-3.8-flash-low
   knowledge_extractor: litellm-edge/an/gemini-3.8-flash-low
   security_auditor: litellm-edge/an/gemini-3.8-flash-low
-  opencode_admin: litellm-edge/cl/gpt-5.6-luna
+  opencode_admin: litellm-edge/cl/gpt-6-luna
   linux_admin: litellm-edge/an/gemini-3.1-pro-high

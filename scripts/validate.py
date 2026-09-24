@@ -94,13 +94,13 @@ def validate_catalog_parity() -> None:
     oc_by_id = opencode["provider"]["litellm-edge"]["models"]
     for model in canonical["models"]:
         mid = model["id"]
-        if mid.startswith("cl/gpt-5.6-"):
+        if mid.startswith("cl/gpt-5.6-") or mid in ("cl/gpt-6-luna", "cl/gpt-6-sol"):
             if model.get("contextWindow") != 922000 or model.get("providerContextWindow") != 1050000:
-                fail(f"GPT-5.6 context limits must separate proxy 922000 and provider 1050000: {mid}")
+                fail(f"GPT-5.6/GPT-6 context limits must separate proxy 922000 and provider 1050000: {mid}")
             if pi_by_id[mid].get("contextWindow") != 922000:
-                fail(f"Pi must use proxy-safe GPT-5.6 context limit: {mid}")
+                fail(f"Pi must use proxy-safe GPT-5.6/GPT-6 context limit: {mid}")
             if oc_by_id[mid].get("limit", {}).get("context") != 922000:
-                fail(f"OpenCode must use proxy-safe GPT-5.6 context limit: {mid}")
+                fail(f"OpenCode must use proxy-safe GPT-5.6/GPT-6 context limit: {mid}")
     sonnet = next(model for model in canonical["models"] if model["id"] == "an/claude-sonnet-4-6")
     if "cacheRead" in sonnet.get("costPerMillion", {}) or "cacheWrite" in sonnet.get("costPerMillion", {}):
         fail("Sonnet cache prices are unknown and must not be active")
@@ -115,9 +115,9 @@ def validate_defaults() -> None:
 
     if pi["defaultProvider"] != "litellm-edge":
         fail("Pi default provider must be litellm-edge")
-    if pi["defaultModel"] != "cl/gpt-5.6-luna":
-        fail("Pi default model must be cl/gpt-5.6-luna")
-    if opencode["model"] != "litellm-edge/cl/gpt-5.6-luna":
+    if pi["defaultModel"] != "cl/gpt-6-luna":
+        fail("Pi default model must be cl/gpt-6-luna")
+    if opencode["model"] != "litellm-edge/cl/gpt-6-luna":
         fail("OpenCode default model must be provider-qualified Luna")
     if opencode["small_model"] != "litellm-edge/an/gemini-3.7-flash-low":
         fail("OpenCode small model must be Gemini 3.7 Flash Low")
@@ -201,17 +201,17 @@ def validate_qwen() -> None:
 def validate_policy_documents() -> None:
     required_markers = {
         "catalog/model-policy.yaml": (
-            "interactive: litellm-edge/cl/gpt-5.6-luna",
+            "interactive: litellm-edge/cl/gpt-6-luna",
             "small_fast: litellm-edge/an/gemini-3.7-flash-low",
             "runtime_context_window: 98304",
             "pi_context_window: 73728",
         ),
         "catalog/agent-routing.yaml": (
             "primary: litellm-edge/an/claude-opus-4-6",
-            "orchestrator: litellm-edge/cl/gpt-5.6-luna",
+            "orchestrator: litellm-edge/cl/gpt-6-luna",
         ),
         "profiles/default.yaml": (
-            "interactive_model: litellm-edge/cl/gpt-5.6-luna",
+            "interactive_model: litellm-edge/cl/gpt-6-luna",
             "small_model: litellm-edge/an/gemini-3.7-flash-low",
         ),
         "profiles/local-first.yaml": (

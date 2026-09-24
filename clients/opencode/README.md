@@ -44,13 +44,13 @@ Supply this variable through a local secret manager or launcher. Do not replace 
 ```powershell
 opencode debug config
 opencode models litellm-edge
-opencode run --model litellm-edge/cl/gpt-5.6-luna "Reply with exactly OK"
+opencode run --model litellm-edge/cl/gpt-6-luna "Reply with exactly OK"
 ```
 
 Expected defaults:
 
 ```text
-model: litellm-edge/cl/gpt-5.6-luna
+model: litellm-edge/cl/gpt-6-luna
 small_model: litellm-edge/an/gemini-3.7-flash-low
 ```
 

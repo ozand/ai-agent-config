@@ -99,7 +99,7 @@ python scripts/validate.py
 
 Recommended defaults:
 
-- interactive: `litellm-edge/cl/gpt-5.6-luna`;
+- interactive: `litellm-edge/cl/gpt-6-luna`;
 - small/fast: `litellm-edge/an/gemini-3.7-flash-low`;
 - reviewer/oracle: `litellm-edge/an/claude-opus-4-6` with Gemini and GPT fallbacks.
 

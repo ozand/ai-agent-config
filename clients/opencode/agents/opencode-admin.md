@@ -1,7 +1,7 @@
 ---
 description: Administers OpenCode configuration and model routing
 mode: subagent
-model: litellm-edge/cl/gpt-5.6-luna
+model: litellm-edge/cl/gpt-6-luna
 permission:
   write: allow
   edit: allow

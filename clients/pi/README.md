@@ -53,7 +53,7 @@ Do not copy or edit:
 ```powershell
 pi auth check --provider litellm-edge
 pi --list-models
-pi --model litellm-edge/cl/gpt-5.6-luna --thinking low -p "Reply with exactly OK"
+pi --model litellm-edge/cl/gpt-6-luna --thinking low -p "Reply with exactly OK"
 ```
 
 Authentication readiness and a real completion are separate gates. Do not run a Qwen completion while its local backend is known to be unavailable.

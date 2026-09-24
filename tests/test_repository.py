@@ -53,8 +53,8 @@ class RepositoryPolicyTests(unittest.TestCase):
     def test_shared_defaults(self) -> None:
         pi = load_json("clients/pi/settings.template.json")
         opencode = load_json("clients/opencode/opencode.template.jsonc")
-        self.assertEqual(pi["defaultModel"], "cl/gpt-5.6-luna")
-        self.assertEqual(opencode["model"], "litellm-edge/cl/gpt-5.6-luna")
+        self.assertEqual(pi["defaultModel"], "cl/gpt-6-luna")
+        self.assertEqual(opencode["model"], "litellm-edge/cl/gpt-6-luna")
         self.assertEqual(
             opencode["small_model"],
             "litellm-edge/an/gemini-3.7-flash-low",
@@ -156,13 +156,13 @@ class RepositoryPolicyTests(unittest.TestCase):
         policy = (ROOT / "catalog/model-policy.yaml").read_text(encoding="utf-8")
         default_profile = (ROOT / "profiles/default.yaml").read_text(encoding="utf-8")
         local_profile = (ROOT / "profiles/local-first.yaml").read_text(encoding="utf-8")
-        self.assertIn("interactive: litellm-edge/cl/gpt-5.6-luna", policy)
+        self.assertIn("interactive: litellm-edge/cl/gpt-6-luna", policy)
         self.assertIn(
             "small_fast: litellm-edge/an/gemini-3.7-flash-low",
             policy,
         )
         self.assertIn(
-            "interactive_model: litellm-edge/cl/gpt-5.6-luna",
+            "interactive_model: litellm-edge/cl/gpt-6-luna",
             default_profile,
         )
         self.assertIn("pi_context_window: 73728", local_profile)

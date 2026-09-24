@@ -229,8 +229,8 @@
       "providerFamily": "cl"
     },
     {
-      "id": "cl/gpt-5.6-luna",
-      "name": "GPT-5.6 Luna",
+      "id": "cl/gpt-6-luna",
+      "name": "GPT-6 Luna",
       "category": "chat",
       "providerFamily": "cl",
       "reasoning": true,
@@ -244,10 +244,10 @@
       "contextWindow": 922000,
       "maxTokens": 128000,
       "costPerMillion": {
-        "input": 0.2,
-        "output": 1.2,
-        "cacheRead": 0.02,
-        "cacheWrite": 0.25
+        "input": 2.0,
+        "output": 12.0,
+        "cacheRead": 0.01,
+        "cacheWrite": 0.125
       },
       "reasoningVariants": [
         "low",
@@ -259,8 +259,8 @@
       "contextWindowConflict": "Endpoint reported max_input_tokens=922000 on 2026-09-08; provider documentation records 1050000 while the authenticated proxy reports 922000. The client-safe limit is set to 922000; providerContextWindow retains 1050000. See docs/endpoint-evidence-receipt-2026-09-08.md."
     },
     {
-      "id": "cl/gpt-5.6-sol",
-      "name": "GPT-5.6 Sol",
+      "id": "cl/gpt-6-sol",
+      "name": "GPT-6 Sol",
       "category": "chat",
       "providerFamily": "cl",
       "reasoning": true,
@@ -276,8 +276,8 @@
       "costPerMillion": {
         "input": 5.0,
         "output": 30.0,
-        "cacheRead": 0.4,
-        "cacheWrite": 5.0
+        "cacheRead": 0.2,
+        "cacheWrite": 2.5
       },
       "reasoningVariants": [
         "low",

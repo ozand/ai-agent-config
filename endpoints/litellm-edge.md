@@ -8,7 +8,7 @@
 | API style | OpenAI-compatible |
 | Base URL | `https://litellm.ayga.tech/v1` |
 | Credential name | `LITELLM_EDGE_API_KEY` |
-| Interactive model | `cl/gpt-5.6-luna` |
+| Interactive model | `cl/gpt-6-luna` |
 | Small/fast model | `an/gemini-3.7-flash-low` |
 
 The credential value is never stored in this repository.
@@ -18,16 +18,16 @@ The credential value is never stored in this repository.
 Direct API requests use the public LiteLLM model ID:
 
 ```text
-cl/gpt-5.6-luna
+cl/gpt-6-luna
 ```
 
 Client model selectors include the client provider ID:
 
 ```text
-litellm-edge/cl/gpt-5.6-luna
+litellm-edge/cl/gpt-6-luna
 ```
 
-These are not interchangeable with a direct provider route such as `openai/gpt-5.6-luna`; each route can use different credentials and failure domains.
+These are not interchangeable with a direct provider route such as `openai/gpt-6-luna`; each route can use different credentials and failure domains.
 
 ## Safe model discovery
 
@@ -48,7 +48,7 @@ $headers = @{
   "Content-Type" = "application/json"
 }
 $body = @{
-  model = "cl/gpt-5.6-luna"
+  model = "cl/gpt-6-luna"
   messages = @(@{ role = "user"; content = "Reply with exactly OK" })
   max_tokens = 16
 } | ConvertTo-Json -Depth 4

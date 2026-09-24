@@ -73,7 +73,7 @@ class ProvenanceReceiptTests(unittest.TestCase):
 class ContextWindowConflictTests(unittest.TestCase):
     """GPT-5.6 family must carry explicit context window conflict documentation."""
 
-    GPT56_IDS = {"cl/gpt-5.6-luna", "cl/gpt-5.6-sol", "cl/gpt-5.6-terra"}
+    GPT56_6_IDS = {"cl/gpt-6-luna", "cl/gpt-6-sol", "cl/gpt-5.6-terra"}
 
     def _catalog_by_id(self) -> dict:
         return {
@@ -82,7 +82,7 @@ class ContextWindowConflictTests(unittest.TestCase):
 
     def test_gpt56_context_window_conflict_is_documented(self) -> None:
         by_id = self._catalog_by_id()
-        for mid in self.GPT56_IDS:
+        for mid in self.GPT56_6_IDS:
             with self.subTest(model=mid):
                 model = by_id[mid]
                 self.assertIn(
@@ -107,44 +107,44 @@ class ContextWindowConflictTests(unittest.TestCase):
     def test_gpt56_client_limit_is_proxy_safe_and_provider_limit_retained(self) -> None:
         """Clients use the authenticated proxy limit; provider context remains separate."""
         by_id = self._catalog_by_id()
-        for mid in self.GPT56_IDS:
+        for mid in self.GPT56_6_IDS:
             with self.subTest(model=mid):
                 self.assertEqual(by_id[mid]["contextWindow"], 922000)
                 self.assertEqual(by_id[mid]["providerContextWindow"], 1050000)
 
 
 class SolCachePriceTests(unittest.TestCase):
-    """Sol cache prices must reflect corrected endpoint evidence (0.40/5.00 per million)."""
+    """Sol cache prices must reflect corrected endpoint evidence (0.20/2.50 per million for GPT-6 Sol)."""
 
     def test_sol_cache_prices_in_catalog(self) -> None:
         by_id = {m["id"]: m for m in load_json("catalog/models.json")["models"]}
-        sol = by_id["cl/gpt-5.6-sol"]["costPerMillion"]
+        sol = by_id["cl/gpt-6-sol"]["costPerMillion"]
         self.assertAlmostEqual(
-            sol["cacheRead"], 0.40,
+            sol["cacheRead"], 0.20,
             places=4,
-            msg="Sol cacheRead must be 0.40 per million (endpoint evidence 2026-09-08)",
+            msg="Sol cacheRead must be 0.20 per million (endpoint evidence 2026-09-08)",
         )
         self.assertAlmostEqual(
-            sol["cacheWrite"], 5.00,
+            sol["cacheWrite"], 2.50,
             places=4,
-            msg="Sol cacheWrite must be 5.00 per million (endpoint evidence 2026-09-08)",
+            msg="Sol cacheWrite must be 2.50 per million (endpoint evidence 2026-09-08)",
         )
 
     def test_sol_cache_prices_in_pi_template(self) -> None:
         pi_models = load_json("clients/pi/models.template.json")[
             "providers"
         ]["litellm-edge"]["models"]
-        sol = next(m for m in pi_models if m["id"] == "cl/gpt-5.6-sol")
-        self.assertAlmostEqual(sol["cost"]["cacheRead"], 0.40, places=4)
-        self.assertAlmostEqual(sol["cost"]["cacheWrite"], 5.00, places=4)
+        sol = next(m for m in pi_models if m["id"] == "cl/gpt-6-sol")
+        self.assertAlmostEqual(sol["cost"]["cacheRead"], 0.20, places=4)
+        self.assertAlmostEqual(sol["cost"]["cacheWrite"], 2.50, places=4)
 
     def test_sol_cache_prices_in_opencode_template(self) -> None:
         oc_models = load_json("clients/opencode/opencode.template.jsonc")[
             "provider"
         ]["litellm-edge"]["models"]
-        sol = oc_models["cl/gpt-5.6-sol"]
-        self.assertAlmostEqual(sol["cost"]["cache_read"], 0.40, places=4)
-        self.assertAlmostEqual(sol["cost"]["cache_write"], 5.00, places=4)
+        sol = oc_models["cl/gpt-6-sol"]
+        self.assertAlmostEqual(sol["cost"]["cache_read"], 0.20, places=4)
+        self.assertAlmostEqual(sol["cost"]["cache_write"], 2.50, places=4)
 
 
 class SonnetCacheConflictTests(unittest.TestCase):

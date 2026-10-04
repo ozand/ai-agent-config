@@ -196,13 +196,15 @@ Every approved canonical ID was checked against the fresh endpoint listing. All 
 - Prior receipt: `docs/migration-receipt.md`
 
 
-## Migration to GPT-6 Luna and GPT-6 Sol (2026-09-09)
+## Historical migration to GPT-6 Luna and GPT-6 Sol (2026-09-09)
 
-The LiteLLM edge proxy (`https://litellm.ayga.tech/v1`) updated upstream routing to redirect `gpt-5.6-luna` and `gpt-5.6-sol` requests to `cl/gpt-6-luna` and `cl/gpt-6-sol` via `model_group_alias`. Both endpoints are active and verified:
+This is historical evidence. The current Sol route is GPT-6.1 Sol; see [`litellm-routing-aliases.md`](litellm-routing-aliases.md) for the current compatibility mapping.
+
+The LiteLLM edge proxy (`https://litellm.ayga.tech/v1`) initially updated upstream routing to redirect `gpt-5.6-luna` and `gpt-5.6-sol` requests to `cl/gpt-6-luna` and `cl/gpt-6-sol` via `model_group_alias`. Both endpoints were active and verified then:
 
 | Model ID | Input Cost (×1M) | Output Cost (×1M) | Cache Read (×1M) | Cache Creation (×1M) | Context Limit (Proxy) | Provider Limit |
 |---|---|---|---|---|---|---|
 | `cl/gpt-6-luna` | 2.0 | 12.0 | 0.01 | 0.125 | 922,000 | 1,050,000 |
 | `cl/gpt-6-sol` | 5.0 | 30.0 | 0.20 | 2.50 | 922,000 | 1,050,000 |
 
-Client templates, default profiles, agent routing, and validation suites have been updated to target `cl/gpt-6-luna` and `cl/gpt-6-sol` directly.
+Client templates, default profiles, agent routing, and validation suites were updated to target these routes directly at that time. Current reusable client configuration uses `cl/gpt-6-luna` and `cl/gpt-6.1-sol`.

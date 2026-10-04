@@ -4,9 +4,9 @@ Covers:
 - Provenance receipt exists and excludes secret/private-path material
 - GPT-5.6 context window conflict is documented in canonical catalog
 - GPT-5.6 Sol cache prices corrected to endpoint evidence
-- Sonnet 4.6 cache conflict is documented without removing repo-held values
+- Sonnet 5.5 High pricing is current and rendered into both client catalogs
 - Compaction policy is documented in the default profile
-- Claude 5 absent (no unapproved promotion)
+- Current Sonnet and GPT Sol generations are approved
 - Canonical model count has not silently changed
 """
 from __future__ import annotations
@@ -73,7 +73,7 @@ class ProvenanceReceiptTests(unittest.TestCase):
 class ContextWindowConflictTests(unittest.TestCase):
     """GPT-5.6 family must carry explicit context window conflict documentation."""
 
-    GPT56_6_IDS = {"cl/gpt-6-luna", "cl/gpt-6-sol", "cl/gpt-5.6-terra"}
+    GPT56_6_IDS = {"cl/gpt-6-luna", "cl/gpt-5.6-terra"}
 
     def _catalog_by_id(self) -> dict:
         return {
@@ -112,17 +112,22 @@ class ContextWindowConflictTests(unittest.TestCase):
                 self.assertEqual(by_id[mid]["contextWindow"], 922000)
                 self.assertEqual(by_id[mid]["providerContextWindow"], 1050000)
 
+    def test_gpt61_sol_uses_only_verified_proxy_context(self) -> None:
+        by_id = self._catalog_by_id()
+        self.assertEqual(by_id["cl/gpt-6.1-sol"]["contextWindow"], 922000)
+        self.assertNotIn("providerContextWindow", by_id["cl/gpt-6.1-sol"])
+
 
 class SolCachePriceTests(unittest.TestCase):
-    """Sol cache prices must reflect corrected endpoint evidence (0.20/2.50 per million for GPT-6 Sol)."""
+    """GPT-6.1 Sol cache prices must match official pricing (0.10/2.50 per million)."""
 
     def test_sol_cache_prices_in_catalog(self) -> None:
         by_id = {m["id"]: m for m in load_json("catalog/models.json")["models"]}
-        sol = by_id["cl/gpt-6-sol"]["costPerMillion"]
+        sol = by_id["cl/gpt-6.1-sol"]["costPerMillion"]
         self.assertAlmostEqual(
-            sol["cacheRead"], 0.20,
+            sol["cacheRead"], 0.10,
             places=4,
-            msg="Sol cacheRead must be 0.20 per million (endpoint evidence 2026-09-08)",
+            msg="GPT-6.1 Sol cacheRead must be 0.10 per million (official pricing)",
         )
         self.assertAlmostEqual(
             sol["cacheWrite"], 2.50,
@@ -134,75 +139,41 @@ class SolCachePriceTests(unittest.TestCase):
         pi_models = load_json("clients/pi/models.template.json")[
             "providers"
         ]["litellm-edge"]["models"]
-        sol = next(m for m in pi_models if m["id"] == "cl/gpt-6-sol")
-        self.assertAlmostEqual(sol["cost"]["cacheRead"], 0.20, places=4)
+        sol = next(m for m in pi_models if m["id"] == "cl/gpt-6.1-sol")
+        self.assertAlmostEqual(sol["cost"]["cacheRead"], 0.10, places=4)
         self.assertAlmostEqual(sol["cost"]["cacheWrite"], 2.50, places=4)
 
     def test_sol_cache_prices_in_opencode_template(self) -> None:
         oc_models = load_json("clients/opencode/opencode.template.jsonc")[
             "provider"
         ]["litellm-edge"]["models"]
-        sol = oc_models["cl/gpt-6-sol"]
-        self.assertAlmostEqual(sol["cost"]["cache_read"], 0.20, places=4)
+        sol = oc_models["cl/gpt-6.1-sol"]
+        self.assertAlmostEqual(sol["cost"]["cache_read"], 0.10, places=4)
         self.assertAlmostEqual(sol["cost"]["cache_write"], 2.50, places=4)
 
 
 class SonnetCacheConflictTests(unittest.TestCase):
-    """Sonnet 4.6 cache conflict must be documented and active cache prices omitted."""
+    """Sonnet 5.5 High active pricing must match official LiteLLM metadata."""
 
-    def test_sonnet_cache_conflict_note_present(self) -> None:
+    def test_sonnet_5_5_high_prices_match_official_metadata(self) -> None:
         by_id = {m["id"]: m for m in load_json("catalog/models.json")["models"]}
-        sonnet = by_id["an/claude-sonnet-4-6"]
-        cpm = sonnet.get("costPerMillion", {})
-        self.assertIn(
-            "cacheConflictNote",
-            cpm,
-            "Sonnet 4.6 costPerMillion must include cacheConflictNote",
-        )
-        note = cpm["cacheConflictNote"]
-        self.assertIn(
-            "null",
-            note,
-            "cacheConflictNote must reference the null endpoint values",
-        )
-        self.assertIn("2026-09-08", note, "cacheConflictNote must include the evidence date")
-
-    def test_sonnet_cache_prices_are_unknown_and_omitted(self) -> None:
-        """Endpoint returned null; active client cache prices must be omitted."""
-        by_id = {m["id"]: m for m in load_json("catalog/models.json")["models"]}
-        cpm = by_id["an/claude-sonnet-4-6"]["costPerMillion"]
-        self.assertNotIn("cacheRead", cpm)
-        self.assertNotIn("cacheWrite", cpm)
+        cost = by_id["an/claude-sonnet-5-5-high"]["costPerMillion"]
+        self.assertEqual(cost, {"input": 2.0, "output": 10.0, "cacheRead": 0.2, "cacheWrite": 2.5})
+        sonnet = by_id["an/claude-sonnet-5-5-high"]
+        self.assertEqual(sonnet["contextWindow"], 1000000)
+        self.assertEqual(sonnet["maxTokens"], 128000)
 
     def test_qwen_output_modality_is_preserved(self) -> None:
         oc_models = load_json("clients/opencode/opencode.template.jsonc")["provider"]["litellm-edge"]["models"]
         self.assertEqual(oc_models["un/qwen3.8-27b-gguf"]["modalities"], {"input": ["text"], "output": ["text"]})
 
-    def test_sonnet_cache_note_not_rendered_into_templates(self) -> None:
-        """cacheConflictNote is a documentation field; rendered templates must not expose it."""
-        pi_models = load_json("clients/pi/models.template.json")[
-            "providers"
-        ]["litellm-edge"]["models"]
-        sonnet_pi = next(
-            (m for m in pi_models if m["id"] == "an/claude-sonnet-4-6"), None
-        )
-        self.assertIsNotNone(sonnet_pi, "Sonnet 4.6 must be in Pi template")
-        if "cost" in sonnet_pi:
-            self.assertNotIn(
-                "cacheConflictNote",
-                sonnet_pi["cost"],
-                "cacheConflictNote must not be rendered into Pi cost block",
-            )
-        oc_models = load_json("clients/opencode/opencode.template.jsonc")[
-            "provider"
-        ]["litellm-edge"]["models"]
-        sonnet_oc = oc_models.get("an/claude-sonnet-4-6", {})
-        if "cost" in sonnet_oc:
-            self.assertNotIn(
-                "cacheConflictNote",
-                sonnet_oc["cost"],
-                "cacheConflictNote must not be rendered into OpenCode cost block",
-            )
+    def test_sonnet_5_5_high_prices_are_rendered(self) -> None:
+        pi_models = load_json("clients/pi/models.template.json")["providers"]["litellm-edge"]["models"]
+        sonnet_pi = next(m for m in pi_models if m["id"] == "an/claude-sonnet-5-5-high")
+        self.assertEqual(sonnet_pi["cost"], {"input": 2.0, "output": 10.0, "cacheRead": 0.2, "cacheWrite": 2.5})
+        oc_models = load_json("clients/opencode/opencode.template.jsonc")["provider"]["litellm-edge"]["models"]
+        sonnet_oc = oc_models["an/claude-sonnet-5-5-high"]
+        self.assertEqual(sonnet_oc["cost"], {"input": 2.0, "output": 10.0, "cache_read": 0.2, "cache_write": 2.5})
 
 
 class CompactionPolicyTests(unittest.TestCase):
@@ -237,25 +208,23 @@ class CompactionPolicyTests(unittest.TestCase):
         )
 
 
-class NoUnapprovedModelsTests(unittest.TestCase):
-    """Gemini 3.8 variants and Claude 5 must not be added without a policy decision."""
+class CurrentGenerationApprovalTests(unittest.TestCase):
+    """Approved current generations must replace obsolete interactive defaults."""
 
-    def test_no_claude5_in_catalog(self) -> None:
+    def test_current_sonnet_and_gpt_sol_ids_are_canonical(self) -> None:
         ids = {m["id"] for m in load_json("catalog/models.json")["models"]}
-        claude5 = {mid for mid in ids if re.search(r"claude[-_\s]?5", mid, re.IGNORECASE)}
-        self.assertEqual(
-            claude5,
-            set(),
-            f"Claude 5 models must not be added without a policy decision; found: {claude5}",
-        )
+        self.assertIn("an/claude-sonnet-5-5-high", ids)
+        self.assertIn("cl/gpt-6.1-sol", ids)
+        self.assertNotIn("an/claude-sonnet-4-6", ids)
+        self.assertNotIn("cl/gpt-6-sol", ids)
 
     def test_canonical_model_count_unchanged(self) -> None:
-        """Model count must remain 40; additions require explicit policy decision."""
+        """Model count remains stable because two superseded IDs were replaced."""
         models = load_json("catalog/models.json")["models"]
         self.assertEqual(
             len(models),
             41,
-            "Canonical catalog must still contain the current 41-model catalog (no additional unapproved additions)",
+            "Canonical catalog must contain 41 approved current model IDs",
         )
 
 

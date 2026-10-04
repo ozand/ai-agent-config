@@ -10,12 +10,16 @@
 | Credential name | `LITELLM_EDGE_API_KEY` |
 | Interactive model | `cl/gpt-6-luna` |
 | Small/fast model | `an/gemini-3.7-flash-low` |
+| Current Sol reasoning model | `cl/gpt-6.1-sol` |
+| Current Claude Sonnet model | `an/claude-sonnet-5-5-high` |
 
 The credential value is never stored in this repository.
 
 ## Raw API model reference
 
-Direct API requests use the public LiteLLM model ID:
+Direct API requests use the public LiteLLM model ID. Legacy GPT-6 Sol and Claude Sonnet 4.6 IDs are redirected centrally by LiteLLM; new client configurations should use the current IDs in the endpoint table. See [`../docs/litellm-routing-aliases.md`](../docs/litellm-routing-aliases.md).
+
+Example:
 
 ```text
 cl/gpt-6-luna

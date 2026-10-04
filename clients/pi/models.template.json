@@ -14,8 +14,8 @@
           "name": "Claude Opus 4.6"
         },
         {
-          "id": "an/claude-sonnet-4-6",
-          "name": "Claude Sonnet 4.6",
+          "id": "an/claude-sonnet-5-5-high",
+          "name": "Claude Sonnet 5.5 High",
           "reasoning": true,
           "input": [
             "text",
@@ -24,11 +24,13 @@
           "output": [
             "text"
           ],
-          "contextWindow": 200000,
-          "maxTokens": 64000,
+          "contextWindow": 1000000,
+          "maxTokens": 128000,
           "cost": {
-            "input": 3.0,
-            "output": 15.0
+            "input": 2.0,
+            "output": 10.0,
+            "cacheRead": 0.2,
+            "cacheWrite": 2.5
           }
         },
         {
@@ -185,8 +187,8 @@
           }
         },
         {
-          "id": "cl/gpt-6-sol",
-          "name": "GPT-6 Sol",
+          "id": "cl/gpt-6.1-sol",
+          "name": "GPT-6.1 Sol",
           "reasoning": true,
           "input": [
             "text",
@@ -198,9 +200,9 @@
           "contextWindow": 922000,
           "maxTokens": 128000,
           "cost": {
-            "input": 5.0,
-            "output": 30.0,
-            "cacheRead": 0.2,
+            "input": 2.0,
+            "output": 10.0,
+            "cacheRead": 0.1,
             "cacheWrite": 2.5
           }
         },

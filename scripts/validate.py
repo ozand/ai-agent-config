@@ -88,25 +88,31 @@ def validate_catalog_parity() -> None:
     canonical_ids, pi_ids, opencode_ids = model_ids()
     if len(canonical_ids) != 41:
         fail(f"Canonical catalog must contain 41 unique IDs, found {len(canonical_ids)}")
+    if "cl/gpt-6-sol" in canonical_ids or "an/claude-sonnet-4-6" in canonical_ids:
+        fail("New client selections must use GPT-6.1 Sol and Claude Sonnet 5.5 High IDs")
     if canonical_ids != pi_ids or canonical_ids != opencode_ids:
         fail("Canonical, Pi, and OpenCode model ID sets differ")
     pi_by_id = {model["id"]: model for model in pi["providers"]["litellm-edge"]["models"]}
     oc_by_id = opencode["provider"]["litellm-edge"]["models"]
     for model in canonical["models"]:
         mid = model["id"]
-        if mid.startswith("cl/gpt-5.6-") or mid in ("cl/gpt-6-luna", "cl/gpt-6-sol"):
-            if model.get("contextWindow") != 922000 or model.get("providerContextWindow") != 1050000:
-                fail(f"GPT-5.6/GPT-6 context limits must separate proxy 922000 and provider 1050000: {mid}")
+        if mid.startswith("cl/gpt-5.6-") or mid in ("cl/gpt-6-luna", "cl/gpt-6.1-sol"):
+            if model.get("contextWindow") != 922000:
+                fail(f"GPT client-safe context limit must be 922000: {mid}")
+            if mid != "cl/gpt-6.1-sol" and model.get("providerContextWindow") != 1050000:
+                fail(f"GPT-5.6/GPT-6 provider context reference must be 1050000: {mid}")
+            if mid == "cl/gpt-6.1-sol" and "providerContextWindow" in model:
+                fail("GPT-6.1 Sol provider context must not be inferred from the older Sol route")
             if pi_by_id[mid].get("contextWindow") != 922000:
                 fail(f"Pi must use proxy-safe GPT-5.6/GPT-6 context limit: {mid}")
             if oc_by_id[mid].get("limit", {}).get("context") != 922000:
                 fail(f"OpenCode must use proxy-safe GPT-5.6/GPT-6 context limit: {mid}")
-    sonnet = next(model for model in canonical["models"] if model["id"] == "an/claude-sonnet-4-6")
-    if "cacheRead" in sonnet.get("costPerMillion", {}) or "cacheWrite" in sonnet.get("costPerMillion", {}):
-        fail("Sonnet cache prices are unknown and must not be active")
-    for rendered in (pi_by_id["an/claude-sonnet-4-6"], oc_by_id["an/claude-sonnet-4-6"]):
-        if "cost" in rendered and any(key in rendered["cost"] for key in ("cacheRead", "cacheWrite", "cache_read", "cache_write")):
-            fail("Unknown Sonnet cache prices must not be rendered")
+    sonnet = next(model for model in canonical["models"] if model["id"] == "an/claude-sonnet-5-5-high")
+    sonnet_cost = sonnet.get("costPerMillion", {})
+    if sonnet_cost.get("input") != 2.0 or sonnet_cost.get("output") != 10.0:
+        fail("Sonnet 5.5 High base prices must match verified LiteLLM reference prices")
+    if sonnet_cost.get("cacheRead") != 0.2 or sonnet_cost.get("cacheWrite") != 2.5:
+        fail("Sonnet 5.5 High cache prices must match verified LiteLLM reference prices")
 
 
 def validate_defaults() -> None:
@@ -203,12 +209,16 @@ def validate_policy_documents() -> None:
         "catalog/model-policy.yaml": (
             "interactive: litellm-edge/cl/gpt-6-luna",
             "small_fast: litellm-edge/an/gemini-3.7-flash-low",
+            "- cl/gpt-6.1-sol",
+            "- an/claude-sonnet-5-5-high",
             "runtime_context_window: 98304",
             "pi_context_window: 73728",
         ),
         "catalog/agent-routing.yaml": (
             "primary: litellm-edge/an/claude-opus-4-6",
             "orchestrator: litellm-edge/cl/gpt-6-luna",
+            "litellm-edge/an/claude-sonnet-5-5-high",
+            "litellm-edge/cl/gpt-6.1-sol",
         ),
         "profiles/default.yaml": (
             "interactive_model: litellm-edge/cl/gpt-6-luna",

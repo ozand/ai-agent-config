@@ -15,7 +15,7 @@ defaults:
 approved_ordinary_families:
   - an/claude-haiku-4-5-20251001
   - an/claude-opus-4-6
-  - an/claude-sonnet-4-6
+  - an/claude-sonnet-5-5-high
   - an/gemini-3.1-pro
   - an/gemini-3.1-pro-high
   - an/gemini-3.1-pro-low
@@ -24,7 +24,7 @@ approved_ordinary_families:
   - an/gemini-3.7-flash-medium
   - an/gpt-oss-120b-medium
   - cl/gpt-6-luna
-  - cl/gpt-6-sol
+  - cl/gpt-6.1-sol
   - cl/gpt-5.6-terra
   - un/gpt-oss-20b-GGUF
   - un/qwen3.8-27b-gguf
@@ -32,6 +32,8 @@ approved_ordinary_families:
 preserve_image_generation_variants: true
 
 stale_active_patterns:
+  - claude-sonnet-4-6
+  - gpt-6-sol
   - gpt-5.3
   - gpt-5.4
   - gpt-5.5

@@ -11,14 +11,14 @@
     "permission": "allow",
     "modelMaxLimits": {
       "litellm-edge/cl/gpt-6-luna": 890000,
-      "litellm-edge/cl/gpt-6-sol": 890000,
+      "litellm-edge/cl/gpt-6.1-sol": 890000,
       "litellm-edge/cl/gpt-5.6-terra": 890000,
       "litellm-edge/an/gemini-3.1-pro-low": 750000,
       "litellm-edge/an/gemini-3.7-flash-low": 750000
     },
     "modelMinLimits": {
       "litellm-edge/cl/gpt-6-luna": 580000,
-      "litellm-edge/cl/gpt-6-sol": 580000,
+      "litellm-edge/cl/gpt-6.1-sol": 580000,
       "litellm-edge/cl/gpt-5.6-terra": 580000,
       "litellm-edge/an/gemini-3.1-pro-low": 450000,
       "litellm-edge/an/gemini-3.7-flash-low": 450000

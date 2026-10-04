@@ -15,9 +15,9 @@ pi:
     primary: litellm-edge/an/claude-opus-4-6
     fallbacks:
       - litellm-edge/an/gemini-3.1-pro-high
-      - litellm-edge/cl/gpt-6-sol
+      - litellm-edge/cl/gpt-6.1-sol
   worker:
-    primary: litellm-edge/an/claude-sonnet-4-6
+    primary: litellm-edge/an/claude-sonnet-5-5-high
     fallbacks:
       - litellm-edge/an/gemini-3.8-flash-high
       - litellm-edge/cl/gpt-5.6-terra
@@ -25,7 +25,7 @@ pi:
     primary: litellm-edge/an/claude-opus-4-6
     fallbacks:
       - litellm-edge/an/gemini-3.1-pro-high
-      - litellm-edge/cl/gpt-6-sol
+      - litellm-edge/cl/gpt-6.1-sol
   delegate:
     primary: litellm-edge/an/gemini-3.8-flash-high
     fallbacks:
@@ -35,7 +35,7 @@ pi:
 opencode:
   orchestrator: litellm-edge/cl/gpt-6-luna
   build: litellm-edge/cl/gpt-6-luna
-  plan: litellm-edge/an/claude-sonnet-4-6
+  plan: litellm-edge/an/claude-sonnet-5-5-high
   explore: litellm-edge/an/gemini-3.8-flash-low
   docs_writer: litellm-edge/an/gemini-3.8-flash-low
   knowledge_extractor: litellm-edge/an/gemini-3.8-flash-low

@@ -127,6 +127,10 @@ See [`docs/litellm-routing-aliases.md`](docs/litellm-routing-aliases.md) for the
 - [`catalog/README.md`](catalog/README.md) — canonical policy and catalog rules.
 - [`endpoints/README.md`](endpoints/README.md) — endpoint-profile contract.
 
+## Local workspace snapshot
+
+The `.herdr` Herdr workspace snapshot is local-only and intentionally ignored by Git. It records sanitized, point-in-time workspace topology for local coordination; it is not part of the reusable client configuration source of truth and must not be committed by default.
+
 ## Repository and governance
 
 - Repository: `https://github.com/ozand/ai-agent-config`

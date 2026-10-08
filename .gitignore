@@ -21,6 +21,9 @@ sessions/
 .opencode/account*
 .opencode/auth*
 
+# Herdr workspace snapshots are local operational metadata and remain untracked.
+.herdr
+
 # Generated and temporary files
 generated/
 rendered/

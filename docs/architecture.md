@@ -78,6 +78,10 @@ hosted price (rare; document the reason). For open-weight self-hosted models
 To supply real local cost data for a `un/` model, update `localCostPerMillion`
 with concrete values and document the measurement method in the catalog entry.
 
+## Local Herdr snapshots
+
+A `.herdr` file may be generated locally as a sanitized, point-in-time workspace topology snapshot. It is operational metadata, not repository configuration or a durable record of client/runtime state. Keep `.herdr` files untracked and local-only: they can contain workspace, pane, and filesystem-location metadata that is useful for local coordination but should not be published by default. The snapshot must omit transcripts, session/terminal identifiers, model metadata, credentials, tokens, cookies, raw payloads, and runtime checkpoints. See the local Herdr skill's `.herdr` format contract before generating or reviewing one.
+
 ## Why templates are not symlinked directly
 
 Pi and OpenCode files commonly contain unrelated local plugins, providers, trust state, and runtime preferences. Direct symlinking can overwrite local intent or couple one machine to repository layout. The default workflow is explicit merge or a future renderer with backups and a dry-run diff.

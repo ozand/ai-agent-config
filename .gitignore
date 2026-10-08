@@ -12,6 +12,10 @@ secrets/
 .local/
 private/
 
+# Pi personal prompts may contain private workflow/environment details.
+# Only reviewed, sanitized templates under clients/pi/prompts/ are shareable.
+.pi/agent/prompts/
+
 # Client runtime state
 auth.json
 models-store.json

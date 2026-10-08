@@ -27,5 +27,8 @@ jobs:
       - name: Validate policy and secret hygiene
         run: python scripts/validate.py
 
+      - name: Validate Pi prompt templates
+        run: python scripts/validate_pi_prompts.py
+
       - name: Run unit tests
         run: python -m unittest discover -s tests -v

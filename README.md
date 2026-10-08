@@ -64,12 +64,15 @@ python scripts/install_config.py --client all --apply --confirm-apply --backup-d
 
 Read [`docs/installer.md`](docs/installer.md) before applying. The tool never reads credential files and creates verified backups outside the repository.
 
-Pi templates:
+Pi templates and reviewed slash prompts:
 
 ```text
 clients/pi/models.template.json
 clients/pi/settings.template.json
+clients/pi/prompts/
 ```
+
+Only reviewed prompt templates in `clients/pi/prompts/` are shared. The personal `%USERPROFILE%\\.pi\\agent\\prompts` directory is ignored and not copied wholesale. See [`docs/pi-prompt-sharing.md`](docs/pi-prompt-sharing.md).
 
 OpenCode templates:
 

@@ -20,6 +20,15 @@ class PiPromptValidationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("passed structure and secret-safety checks", result.stdout)
 
+    def test_validator_detects_common_github_token_prefixes(self) -> None:
+        from scripts.validate_pi_prompts import ABSOLUTE_PATH, PRIVATE_TOOL_REFERENCES, SECRET_PATTERNS
+
+        self.assertTrue(any(pattern.search("github_pat_" + "A" * 30) for pattern in SECRET_PATTERNS))
+        self.assertTrue(any(pattern.search("ghp_" + "A" * 30) for pattern in SECRET_PATTERNS))
+        self.assertIsNotNone(ABSOLUTE_PATH.search(r"D:\\Projects\\private\\prompt.md"))
+        self.assertIsNotNone(ABSOLUTE_PATH.search(r"\\\\server\\share\\prompt.md"))
+        self.assertIsNotNone(PRIVATE_TOOL_REFERENCES.search("github-issue-steward"))
+
     def test_personal_prompt_directory_is_ignored(self) -> None:
         ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
         self.assertIn(".pi/agent/prompts/", ignore)

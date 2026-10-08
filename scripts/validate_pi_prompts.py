@@ -12,10 +12,16 @@ PROMPTS = ROOT / "clients/pi/prompts"
 SECRET_PATTERNS = (
     re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"),
     re.compile(r"\bAIza[A-Za-z0-9_-]{30,}\b"),
+    re.compile(r"\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b"),
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"Bearer\s+[A-Za-z0-9._~+/=-]{24,}", re.IGNORECASE),
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
 )
-ABSOLUTE_PATH = re.compile(r"(?:[A-Z]:\\Users\\[^\s`\"<>]+|/Users/[^\s`\"<>]+|/home/[^\s`\"<>]+)", re.IGNORECASE)
+ABSOLUTE_PATH = re.compile(
+    r"(?:[A-Z]:\\(?:Users|Code|Work|Projects)\\[^\s`\"<>]+|/Users/[^\s`\"<>]+|/home/[^\s`\"<>]+|/mnt/[a-z]/[^\s`\"<>]+|\\\\[^\\\s]+\\[^\s`\"<>]+)",
+    re.IGNORECASE,
+)
+PRIVATE_TOOL_REFERENCES = re.compile(r"\b(?:github-issue-steward|code-reviewer|context-mode)\b", re.IGNORECASE)
 REQUIRED = {"README.md", "git-sync-status.md", "status-ru.md", "project-overview.md", "capture-learnings.md"}
 
 
@@ -40,6 +46,8 @@ def validate() -> None:
                 fail(f"Likely secret material found in: {path.relative_to(ROOT)}")
         if ABSOLUTE_PATH.search(text):
             fail(f"Machine-specific absolute path found in: {path.relative_to(ROOT)}")
+        if PRIVATE_TOOL_REFERENCES.search(text):
+            fail(f"Private agent/tool dependency found in shareable prompt: {path.relative_to(ROOT)}")
         if "~/.pi/agent/prompts" in text or "%USERPROFILE%\\.pi\\agent\\prompts" in text:
             fail(f"Personal prompt directory reference leaked into shareable prompt: {path.relative_to(ROOT)}")
 

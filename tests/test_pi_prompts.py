@@ -25,6 +25,8 @@ class PiPromptValidationTests(unittest.TestCase):
 
         self.assertTrue(any(pattern.search("github_pat_" + "A" * 30) for pattern in SECRET_PATTERNS))
         self.assertTrue(any(pattern.search("ghp_" + "A" * 30) for pattern in SECRET_PATTERNS))
+        self.assertTrue(any(pattern.search("AKIA" + "A" * 16) for pattern in SECRET_PATTERNS))
+        self.assertTrue(any(pattern.search("api_key=" + "A" * 24) for pattern in SECRET_PATTERNS))
         self.assertIsNotNone(ABSOLUTE_PATH.search(r"D:\\Projects\\private\\prompt.md"))
         self.assertIsNotNone(ABSOLUTE_PATH.search(r"\\\\server\\share\\prompt.md"))
         self.assertIsNotNone(PRIVATE_TOOL_REFERENCES.search("github-issue-steward"))

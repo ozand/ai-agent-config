@@ -20,7 +20,7 @@ SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
 )
 ABSOLUTE_PATH = re.compile(
-    r"(?:[A-Z]:\\(?:Users|Code|Work|Projects)\\[^\s`\"<>]+|/Users/[^\s`\"<>]+|/home/[^\s`\"<>]+|/mnt/[a-z]/[^\s`\"<>]+|\\\\[^\\\s]+\\[^\s`\"<>]+)",
+    r"(?:[A-Z]:\\[^\s`\"<>]+|/(?:Users|home|opt|srv|mnt|private|var|tmp)/[^\s`\"<>]+|\\\\[^\\\s]+\\[^\s`\"<>]+)",
     re.IGNORECASE,
 )
 PRIVATE_TOOL_REFERENCES = re.compile(r"\b(?:github-issue-steward|code-reviewer|context-mode)\b", re.IGNORECASE)

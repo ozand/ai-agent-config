@@ -19,6 +19,9 @@ Linux/macOS equivalents live under `~/.pi/agent/`.
 - `settings.template.json` — non-secret defaults and subagent routing.
 - `scripts/read-litellm-api-key.ps1` — Windows file-backed credential resolver.
 - `extensions/auto-compact-272k.ts` — selective large-context compaction.
+- `prompts/` — reviewed, reusable Pi slash-command prompt templates; see [`../../docs/pi-prompt-sharing.md`](../../docs/pi-prompt-sharing.md).
+
+The initial reusable prompt set includes `/git-sync-status`, `/status-ru`, `/project-overview`, and `/capture-learnings`. Install only these reviewed files from `clients/pi/prompts/`; do not copy a personal prompt directory wholesale.
 
 ## Credential setup
 
@@ -57,6 +60,16 @@ pi --model litellm-edge/cl/gpt-6-luna --thinking low -p "Reply with exactly OK"
 ```
 
 Authentication readiness and a real completion are separate gates. Do not run a Qwen completion while its local backend is known to be unavailable.
+
+## Slash-command prompt templates
+
+Reviewed reusable prompt templates live in `clients/pi/prompts/`. Copy only reviewed files into the local Pi prompt directory:
+
+```text
+%USERPROFILE%\.pi\agent\prompts\
+```
+
+Use `/reload` in Pi after adding or changing prompt templates, then verify each command in the live `/` command menu. Project prompt templates require project trust; do not copy personal prompts wholesale. See [`../../docs/pi-prompt-sharing.md`](../../docs/pi-prompt-sharing.md) for the sharing policy and review checklist.
 
 ## Qwen reasoning mapping
 

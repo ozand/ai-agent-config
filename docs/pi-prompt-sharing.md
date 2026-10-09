@@ -28,7 +28,7 @@ Do not copy personal prompt files to this repository without review. Keep out:
 - session, trust, cache, or other generated runtime state;
 - instructions that disclose private organizational procedures or assume private agents/tools without documenting a safe, public alternative.
 
-Local prompt configuration under `%USERPROFILE%\.pi\agent\prompts` is ignored by the repository. Only explicitly reviewed files under `clients/pi/prompts/` are candidates for sharing.
+Personal prompt files outside the repository are not copied wholesale. Only explicitly reviewed files under `clients/pi/prompts/` are candidates for sharing.
 
 ## Review checklist before adding a prompt
 

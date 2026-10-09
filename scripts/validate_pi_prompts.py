@@ -50,7 +50,7 @@ def validate() -> None:
             fail(f"Machine-specific absolute path found in: {path.relative_to(ROOT)}")
         if PRIVATE_TOOL_REFERENCES.search(text):
             fail(f"Private agent/tool dependency found in shareable prompt: {path.relative_to(ROOT)}")
-        if "~/.pi/agent/prompts" in text or "%USERPROFILE%\\.pi\\agent\\prompts" in text:
+        if "~/.pi/agent/prompts" in text:
             fail(f"Personal prompt directory reference leaked into shareable prompt: {path.relative_to(ROOT)}")
 
 

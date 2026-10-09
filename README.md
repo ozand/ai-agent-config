@@ -72,7 +72,7 @@ clients/pi/settings.template.json
 clients/pi/prompts/
 ```
 
-Only reviewed prompt templates in `clients/pi/prompts/` are shared. The personal `%USERPROFILE%\\.pi\\agent\\prompts` directory is ignored and not copied wholesale. See [`docs/pi-prompt-sharing.md`](docs/pi-prompt-sharing.md).
+Only reviewed prompt templates in `clients/pi/prompts/` are shared. Personal prompts outside this repository are not copied wholesale. See [`docs/pi-prompt-sharing.md`](docs/pi-prompt-sharing.md).
 
 OpenCode templates:
 

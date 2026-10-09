@@ -21,7 +21,7 @@ Linux/macOS equivalents live under `~/.pi/agent/`.
 - `extensions/auto-compact-272k.ts` — selective large-context compaction.
 - `prompts/` — reviewed, reusable Pi slash-command prompt templates; see [`../../docs/pi-prompt-sharing.md`](../../docs/pi-prompt-sharing.md).
 
-The initial reusable prompt set includes `/git-sync-status`, `/status-ru`, `/project-overview`, and `/capture-learnings`. Install only these reviewed files from `clients/pi/prompts/`; personal prompt files in `%USERPROFILE%\\.pi\\agent\\prompts` are ignored and are not automatically published.
+The initial reusable prompt set includes `/git-sync-status`, `/status-ru`, `/project-overview`, and `/capture-learnings`. Install only these reviewed files from `clients/pi/prompts/`; do not copy a personal prompt directory wholesale.
 
 ## Credential setup
 

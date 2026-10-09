@@ -31,9 +31,11 @@ class PiPromptValidationTests(unittest.TestCase):
         self.assertIsNotNone(ABSOLUTE_PATH.search(r"\\\\server\\share\\prompt.md"))
         self.assertIsNotNone(PRIVATE_TOOL_REFERENCES.search("github-issue-steward"))
 
-    def test_personal_prompt_directory_is_ignored(self) -> None:
-        ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
-        self.assertIn(".pi/agent/prompts/", ignore)
+    def test_local_prompts_are_not_copied_or_configured(self) -> None:
+        docs = (ROOT / "docs/pi-prompt-sharing.md").read_text(encoding="utf-8")
+        self.assertIn("not copied wholesale", docs)
+        self.assertNotIn("%USERPROFILE%", docs)
+        self.assertNotIn(".pi/agent/prompts/", docs)
 
     def test_public_prompt_directory_is_documented(self) -> None:
         readme = (ROOT / "clients/pi/README.md").read_text(encoding="utf-8")

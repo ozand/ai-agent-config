@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import unittest
@@ -35,6 +36,9 @@ class PiPromptValidationTests(unittest.TestCase):
         self.assertIsNotNone(ABSOLUTE_PATH.search("/usr/local/bin/tool"))
         self.assertIsNotNone(ABSOLUTE_PATH.search("C:/Users/name/file.txt"))
         self.assertIsNotNone(ABSOLUTE_PATH.search(r"\\\\server\\share\\prompt.md"))
+        self.assertIsNone(ABSOLUTE_PATH.search(re.sub(r"https?://[^\s`\"<>]+", "", "https://example.com/a/b")))
+        self.assertIsNone(ABSOLUTE_PATH.search("./foo/bar"))
+        self.assertIsNone(ABSOLUTE_PATH.search("../foo/bar"))
         self.assertIsNotNone(PRIVATE_TOOL_REFERENCES.search("github-issue-steward"))
 
     def test_local_prompts_are_not_copied_or_configured(self) -> None:

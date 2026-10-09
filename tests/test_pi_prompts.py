@@ -31,6 +31,9 @@ class PiPromptValidationTests(unittest.TestCase):
         self.assertIsNotNone(ABSOLUTE_PATH.search(r"E:\\Users\\name\\private.txt"))
         self.assertIsNotNone(ABSOLUTE_PATH.search("/opt/private/prompt.md"))
         self.assertIsNotNone(ABSOLUTE_PATH.search("/srv/app/private/prompt.md"))
+        self.assertIsNotNone(ABSOLUTE_PATH.search("/etc/shadow"))
+        self.assertIsNotNone(ABSOLUTE_PATH.search("/usr/local/bin/tool"))
+        self.assertIsNotNone(ABSOLUTE_PATH.search("C:/Users/name/file.txt"))
         self.assertIsNotNone(ABSOLUTE_PATH.search(r"\\\\server\\share\\prompt.md"))
         self.assertIsNotNone(PRIVATE_TOOL_REFERENCES.search("github-issue-steward"))
 

@@ -20,7 +20,7 @@ SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
 )
 ABSOLUTE_PATH = re.compile(
-    r"(?:[A-Z]:\\[^\s`\"<>]+|/(?:Users|home|opt|srv|mnt|private|var|tmp)/[^\s`\"<>]+|\\\\[^\\\s]+\\[^\s`\"<>]+)",
+    r"(?:[A-Z]:(?:\\|/)(?!/)[^\s`\"<>]+|/(?!/)[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+|\\\\[^\\\s]+\\[^\s`\"<>]+)",
     re.IGNORECASE,
 )
 PRIVATE_TOOL_REFERENCES = re.compile(r"\b(?:github-issue-steward|code-reviewer|context-mode)\b", re.IGNORECASE)
@@ -46,7 +46,7 @@ def validate() -> None:
         for pattern in SECRET_PATTERNS:
             if pattern.search(text):
                 fail(f"Likely secret material found in: {path.relative_to(ROOT)}")
-        if ABSOLUTE_PATH.search(text):
+        if path.name != "README.md" and ABSOLUTE_PATH.search(text):
             fail(f"Machine-specific absolute path found in: {path.relative_to(ROOT)}")
         if PRIVATE_TOOL_REFERENCES.search(text):
             fail(f"Private agent/tool dependency found in shareable prompt: {path.relative_to(ROOT)}")

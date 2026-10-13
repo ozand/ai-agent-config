@@ -41,6 +41,19 @@ class PiPromptValidationTests(unittest.TestCase):
         self.assertIsNone(ABSOLUTE_PATH.search("../foo/bar"))
         self.assertIsNotNone(PRIVATE_TOOL_REFERENCES.search("github-issue-steward"))
 
+    def test_issue_prompts_preserve_safety_boundaries(self) -> None:
+        execute = (ROOT / "clients/pi/prompts/execute-plan.md").read_text(encoding="utf-8")
+        issues = (ROOT / "clients/pi/prompts/create-issues.md").read_text(encoding="utf-8")
+        self.assertIn("without repeated confirmation", execute)
+        self.assertIn("Stop and report", execute)
+        self.assertIn("user explicitly approved it", execute)
+        self.assertIn("advisory text only", execute)
+        self.assertIn("duplicates", issues)
+        self.assertIn("close issues automatically", issues)
+        self.assertIn("Only create issues when the user explicitly authorizes submission", issues)
+        self.assertIn("If authorization or target is ambiguous, stop and ask", issues)
+        self.assertIn("advisory text only", issues)
+
     def test_local_prompts_are_not_copied_or_configured(self) -> None:
         docs = (ROOT / "docs/pi-prompt-sharing.md").read_text(encoding="utf-8")
         self.assertIn("not copied wholesale", docs)

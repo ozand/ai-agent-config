@@ -24,7 +24,7 @@ ABSOLUTE_PATH = re.compile(
     re.IGNORECASE,
 )
 PRIVATE_TOOL_REFERENCES = re.compile(r"\b(?:github-issue-steward|code-reviewer|context-mode)\b", re.IGNORECASE)
-REQUIRED = {"README.md", "git-sync-status.md", "status-ru.md", "project-overview.md", "capture-learnings.md"}
+REQUIRED = {"README.md", "git-sync-status.md", "status-ru.md", "project-overview.md", "capture-learnings.md", "execute-plan.md", "create-issues.md"}
 
 
 def fail(message: str) -> None:

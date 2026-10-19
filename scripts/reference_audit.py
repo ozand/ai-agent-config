@@ -17,7 +17,7 @@ HAS_SECURE_POSIX_OPEN = os.name != "nt" and hasattr(os, "O_NOFOLLOW") and os.ope
 LINK = re.compile(r'!?\[[^\]\n]*+\]\(\s*(<[^>\n]{1,4096}>|[^\s()]{1,4096})(?:\s+["\'][^"\']{0,4096}["\'])?\s*\)')
 URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
-PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}+")
+PATH_RUN = re.compile(r"(?<![\w/])[\w./-]+")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
 URI_AUTHORITY = re.compile(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#]*")
 ABS = re.compile(r"(?i)file:(?:(?:/{1,3}|\\\\)|[A-Za-z]:[\\/])[^`<>\"']*|file:(?:%2f){1,3}[^`<>\"']*|file:[A-Za-z]%3a(?:%2f|%5c)[^`<>\"']*|file:[A-Za-z]:[^`<>\"']*|file:[A-Za-z]%3a[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
@@ -100,22 +100,39 @@ def extract(text):
         uri_spans = sorted(m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
                      if not re.match(r"(?i)^[A-Z]:[\\/]", m.group(0)))
         def overlaps_uri(match):
-            i = bisect_left(uri_spans, (match.start(), -1))
-            return (i > 0 and uri_spans[i - 1][1] > match.start()) or (i < len(uri_spans) and uri_spans[i][0] < match.end())
+            return overlaps_span(match.start(), match.end())
+        def overlaps_span(start, end):
+            i = bisect_left(uri_spans, (start, -1))
+            return (i > 0 and uri_spans[i - 1][1] > start) or (i < len(uri_spans) and uri_spans[i][0] < end)
         markdown_spans = sorted(span for _, _, span in found)
         accepted_spans = []
         candidates = []
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line) if not overlaps_uri(m))
+        absolute_matches = list(re.finditer(r"(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])/(?!/)|\\\\)[^`<>\"']*", line))
+        candidates.extend((m.group(0), "path_candidate", m.span()) for m in absolute_matches if not overlaps_uri(m))
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![\w:])\\[A-Za-z0-9_.-]+(?:\\[^\s<>\"']+)+", line) if not overlaps_uri(m))
         candidates.extend((m.group(0), "dynamic_candidate", m.span()) for m in DYNAMIC.finditer(line) if not overlaps_uri(m))
         if front and 1 < number <= end:
             match = FRONT.match(line)
             if match and ("/" in match.group(1) or "." in match.group(1)):
                 candidates.append((match.group(1), "frontmatter_candidate", match.span(1)))
-        candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?i)\b[A-Z]:[\\/][^\s<>()]+", line) if not overlaps_uri(m))
-        for match in PATH.finditer(line):
-            if not overlaps_uri(match):
-                candidates.append((match.group(0), "path_candidate", match.span()))
+        for run in PATH_RUN.finditer(line):
+            value = run.group(0).rstrip(".")
+            prefix = ""
+            for relative_prefix in ("../", "./"):
+                if value.startswith(relative_prefix):
+                    prefix, value = relative_prefix, value[len(relative_prefix):]
+                    break
+            parts = value.split("/")
+            basename = parts[-1]
+            stem, dot, extension = basename.rpartition(".")
+            valid_parts = all(part not in {"", ".", ".."} for part in parts[:-1]) and bool(stem)
+            valid_extension = bool(dot) and 1 <= len(extension) <= 8 and extension.isalnum()
+            if not (valid_parts and valid_extension):
+                continue
+            start, end = run.start(), run.start() + len(prefix) + len(value)
+            if not overlaps_span(start, end):
+                candidates.append((prefix + value, "path_candidate", (start, end)))
         for candidate in sorted(candidates, key=lambda item: (item[2][0], item[2][1], item[1])):
             span = candidate[2]
             i = bisect_left(markdown_spans, (span[0], -1))

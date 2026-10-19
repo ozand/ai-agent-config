@@ -315,6 +315,14 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(len(list(reference_audit.extract(large))), 1)
         self.assertLess(__import__("time").perf_counter() - started, 5.0)
 
+    def test_absolute_path_candidate_scanner_covers_posix_drive_and_unc(self):
+        import reference_audit
+        for path in ("/private/posix.md", "C:/private/drive.md", r"C:\\private\\drive.md", r"\\server\\share\\file.md"):
+            rows = list(reference_audit.extract(path))
+            self.assertEqual(len(rows), 1, (path, rows))
+            self.assertEqual(rows[0][1], path)
+            self.assertEqual(reference_audit.classify_binding(rows[0][1]), "host_absolute")
+
     def test_private_use_marker_text_cannot_crash_sanitization(self):
         import reference_audit
         for token in ("\ue0000\ue001", "\ue1007\ue101", "\ue2000\ue201"):

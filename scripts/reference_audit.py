@@ -19,8 +19,8 @@ LINK = re.compile(r'!?\[[^\]\n]*+\]\(\s*(<[^>\n]{1,4096}>|[^\s()]{1,4096})(?:\s+
 URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH_RUN = re.compile(r"(?<![\w/])[\w./-]+")
-SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
-ENCODED_SECRET = re.compile(r"(?i)(?:api(?:%5f|_)key|access(?:%5f|_)token|client(?:%5f|_)secret|password|passwd)(?:%3d|=)[A-Za-z0-9%._/+=-]{12,}")
+SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
+ENCODED_SECRET = re.compile(r"(?i)(?:api(?:%5f|_)key|access(?:%5f|_)token|refresh(?:%5f|_)token|client(?:%5f|_)secret|password|passwd)(?:%3d|=)[A-Za-z0-9%._/+=-]{12,}")
 URI_AUTHORITY = re.compile(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#]*")
 ABS = re.compile(r"(?i)file:(?:[^`<>\"']*)|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
 DYNAMIC = re.compile(r"(?:\$\{[^}]{1,512}\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]{1,512}\}\})(?:[\\/][^\s<>()\]]+)?")
@@ -107,7 +107,7 @@ def extract(text, record_budget=None, max_records=None):
         record_budget = [0]
     lines = text.splitlines()
     front = len(lines) > 1 and lines[0].strip() == "---"
-    end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
+    frontmatter_end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
     for number, line in enumerate(lines, 1):
         found = []
         for match in LINK.finditer(line):
@@ -134,16 +134,17 @@ def extract(text, record_budget=None, max_records=None):
         candidates = BoundedCandidates()
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line) if not overlaps_uri(m))
         for match in re.finditer(r"(?i)\bfile:[^\s<>()]+|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])/(?!/)|\\\\)[^\s`<>\"']+", line):
-            end = match.start()
-            while end < len(line) and not line[end].isspace() and line[end] not in "<>\"'`()[]{}":
-                end += 1
-            if end > match.start() and not overlaps_span(match.start(), end):
-                candidates.append((line[match.start():end], "path_candidate", (match.start(), end)))
+            token_end = match.start()
+            while token_end < len(line) and not line[token_end].isspace() and line[token_end] not in "<>\"'`()[]{}":
+                token_end += 1
+            if token_end > match.start() and not overlaps_span(match.start(), token_end):
+                candidates.append((line[match.start():token_end], "path_candidate", (match.start(), token_end)))
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![\w:])\\[A-Za-z0-9_.-]+(?:\\[^\s<>\"']+)+", line) if not overlaps_uri(m))
         candidates.extend((m.group(0), "dynamic_candidate", m.span()) for m in DYNAMIC.finditer(line) if not overlaps_uri(m))
-        if front and 1 < number <= end:
+        if front and 1 < number <= frontmatter_end:
             match = FRONT.match(line)
             if match and ("/" in match.group(1) or "." in match.group(1)):
+                candidates = [candidate for candidate in candidates if candidate[2][0] >= match.end(1) or candidate[2][1] <= match.start(1)]
                 candidates.append((match.group(1), "frontmatter_candidate", match.span(1)))
         for run in PATH_RUN.finditer(line):
             value = run.group(0).rstrip(".")

@@ -246,6 +246,25 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertEqual(stdout.getvalue(), "")
             self.assertIn("record limit exceeded", stderr.getvalue())
 
+    def test_decoded_percent_basename_matches_supplied_entity(self):
+        source = self.write("index.md", "[unicode](caf%C3%A9.md)\n")
+        target = self.write("café.md", "target\n")
+        result = self.cli("--format", "json", str(source), str(target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        row = json.loads(result.stdout)["records"][0]
+        self.assertEqual(row["target"], "caf%C3%A9.md")
+        self.assertEqual(row["exact_path"], "exact_path")
+        self.assertEqual(row["entity_match"], "entity_match")
+
+    def test_reference_with_nul_does_not_abort_other_records(self):
+        source = self.write("nul.md", "[bad](bad\\x00.md) [valid](valid.md)\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        records = json.loads(result.stdout)["records"]
+        self.assertEqual(len(records), 2)
+        self.assertEqual(records[0]["exact_path"], "unchecked")
+        self.assertEqual(records[1]["target"], "valid.md")
+
     def test_no_exact_path_lookup_does_not_claim_missing(self):
         source = self.write("candidate.md", "guide.md exists as an entity mention\\n")
         self.write("guide.md", "present\\n")
@@ -638,6 +657,12 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("C:/private/local.md", result.stdout)
         self.assertNotIn("sk-", result.stdout)
+
+    def test_frontmatter_closing_delimiter_is_not_reclassified(self):
+        import reference_audit
+        records = list(reference_audit.extract("---\ninclude: /tmp/a.md\n---\nnext: ./guide.md\n"))
+        self.assertEqual([(row[0], row[2]) for row in records],
+                         [(2, "frontmatter_candidate"), (4, "path_candidate")])
 
     def test_frontmatter_and_unsupported_dynamic_target(self):
         source = self.write("prompt.md", "---\ninclude: ./guide.md\n---\nUse ${ROOT}/other.md\n")

@@ -20,7 +20,7 @@ FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}+")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
 URI_AUTHORITY = re.compile(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#]*")
-ABS = re.compile(r"(?i)file:(?:(?:/{1,3}|\\\\)|[A-Za-z]:[\\/])[^`<>\"']*|file:(?:%2f){1,3}[^`<>\"']*|file:[A-Za-z]%3a(?:%2f|%5c)[^`<>\"']*|file:[A-Za-z]:[^`<>\"']*|file:[A-Za-z]%3a[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<!/)\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
+ABS = re.compile(r"(?i)file:(?:(?:/{1,3}|\\\\)|[A-Za-z]:[\\/])[^`<>\"']*|file:(?:%2f){1,3}[^`<>\"']*|file:[A-Za-z]%3a(?:%2f|%5c)[^`<>\"']*|file:[A-Za-z]:[^`<>\"']*|file:[A-Za-z]%3a[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
 DYNAMIC = re.compile(r"(?:\$\{[^}]{1,512}\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]{1,512}\}\})(?:[\\/][^\s<>()\]]+)?")
 
 @dataclass(frozen=True)
@@ -49,22 +49,17 @@ def sanitize(text: str) -> str:
         _, host = rest.rsplit("@", 1)
         return scheme + "://[REDACTED]@" + host
     text = URI_AUTHORITY.sub(redact_authority, text)
-    marker_tokens = []
-    def hold_marker(match):
-        marker_tokens.append(match.group(0))
-        return "\ue200" + str(len(marker_tokens) - 1) + "\ue201"
-    text = re.sub(r"\[(?:SLASH|BACKSLASH)\]", hold_marker, text)
-    protected = []
-    def hold(value):
-        protected.append(value)
-        return "\ue000" + str(len(protected) - 1) + "\ue001"
-    text = re.sub(r"(?<=[)}])/(?!/)", lambda match: hold("/"), text)
-    text = DYNAMIC.sub(lambda match: "".join(hold(char) if char in "/\\" else char for char in match.group(0)), text)
-    text = re.sub(r"(?i)file:(?:/{1,3}|\\\\)[^`<>\"']*", "[PATH]", text)
-    text = re.sub(r"(?i)(?<=file:)/{1,3}", lambda match: hold("/"), text)
-    text = ABS.sub("[PATH]", text)
-    text = re.sub(r"\ue000(\d+)\ue001", lambda match: protected[int(match.group(1))], text)
-    return re.sub(r"\ue200(\d+)\ue201", lambda match: marker_tokens[int(match.group(1))], text)
+    matches = list(DYNAMIC.finditer(text))
+    if not matches:
+        return ABS.sub("[PATH]", text)
+    output = []
+    cursor = 0
+    for match in matches:
+        output.append(ABS.sub("[PATH]", text[cursor:match.start()]))
+        output.append(match.group(0))
+        cursor = match.end()
+    output.append(ABS.sub("[PATH]", text[cursor:]))
+    return "".join(output)
 
 def normalize_windows_final_path(value: str) -> str:
     if value.startswith("\\\\?\\UNC\\"):
@@ -118,8 +113,9 @@ def extract(text):
             if match and ("/" in match.group(1) or "." in match.group(1)):
                 candidates.append((match.group(1), "frontmatter_candidate", match.span(1)))
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?i)\b[A-Z]:[\\/][^\s<>()]+", line) if not overlaps_uri(m))
-        candidates.extend((m.group(0), "path_candidate", m.span()) for m in PATH.finditer(line)
-                          if not overlaps_uri(m))
+        for match in PATH.finditer(line):
+            if not overlaps_uri(match):
+                candidates.append((match.group(0), "path_candidate", match.span()))
         for candidate in sorted(candidates, key=lambda item: (item[2][0], item[2][1], item[1])):
             span = candidate[2]
             i = bisect_left(markdown_spans, (span[0], -1))

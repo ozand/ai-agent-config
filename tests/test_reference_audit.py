@@ -310,6 +310,20 @@ class ReferenceAuditTests(unittest.TestCase):
         import reference_audit
         rows = list(reference_audit.extract("." * 50000 + "! tail.md"))
         self.assertLessEqual(len(rows), 1)
+        large = "." * 20000 + " tail.md"
+        started = __import__("time").perf_counter()
+        self.assertEqual(len(list(reference_audit.extract(large))), 1)
+        self.assertLess(__import__("time").perf_counter() - started, 5.0)
+
+    def test_private_use_marker_text_cannot_crash_sanitization(self):
+        import reference_audit
+        for token in ("\ue0000\ue001", "\ue1007\ue101", "\ue2000\ue201"):
+            text = "bad" + token + ".md"
+            self.assertEqual(reference_audit.sanitize(text), text)
+        literal = "foo[SLASH]bar[BACKSLASH]baz.md"
+        self.assertEqual(reference_audit.sanitize(literal), literal)
+        self.assertEqual(reference_audit.sanitize("${ROOT}/guide.md"), "${ROOT}/guide.md")
+        self.assertEqual(reference_audit.sanitize("${ROOT}\\\\guide.md"), "${ROOT}\\\\guide.md")
 
     def test_supported_absolute_path_families_classify_and_redact(self):
         import reference_audit

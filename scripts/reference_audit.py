@@ -210,7 +210,7 @@ def render_table(data):
     for row in data["records"]:
         cells = [table_text(row[key]) for key in keys]
         lines.append("| " + " | ".join(cells) + " |")
-    return "\\n".join(lines)
+    return "\n".join(lines)
 
 def render_mermaid(data):
     lines = ["graph LR"]
@@ -220,7 +220,7 @@ def render_mermaid(data):
         label = mermaid_text(f"{row['relation']}:{row['exact_path']}/{row['entity_match']}")
         name = mermaid_text(row["target"])
         lines.append(f'  {source}["Source {source}"] -->|{label}| {target}["{name}"]')
-    return "\\n".join(lines)
+    return "\n".join(lines)
 
 
 def main(argv=None):

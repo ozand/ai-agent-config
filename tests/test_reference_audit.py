@@ -44,10 +44,16 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(a.returncode, 0, a.stderr)
         self.assertEqual(a.stdout, b.stdout)
         data = json.loads(a.stdout.split("\n\n", 1)[0])
+        import reference_audit
         self.assertEqual(data["schema_version"], 1)
         self.assertEqual(data["records"][0]["exact_path"], "exact_path")
         self.assertIn("| ID | Source |", a.stdout)
         self.assertIn("```mermaid", a.stdout)
+        table = reference_audit.render_table(data)
+        self.assertEqual(len(table.splitlines()), 2 + len(data["records"]))
+        self.assertTrue(table.splitlines()[1].startswith("|---|"))
+        graph = reference_audit.render_mermaid(data)
+        self.assertEqual(len(graph.splitlines()), 1 + len(data["records"]))
         self.assertEqual(sum(data["counts"]["exact_path"].values()), len(data["records"]))
 
     def test_entity_match_does_not_imply_exact_path(self):
@@ -132,8 +138,9 @@ class ReferenceAuditTests(unittest.TestCase):
             "binding": "relative", "requirement": "unknown"}]}
         table = reference_audit.render_table(data)
         self.assertNotIn("\r", table)
-        self.assertEqual(table.count("\\n| R1 |"), 1)
-        self.assertEqual(table.count("| R1 |"), 1)
+        self.assertEqual(len(table.splitlines()), 3)
+        self.assertEqual(table.splitlines()[-1].count("|"), 10)
+        self.assertIn("first  second", table)
         self.assertIn("first  second", table)
 
     def test_size_limit_and_invalid_utf8_fail_closed(self):

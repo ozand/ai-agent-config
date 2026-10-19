@@ -247,6 +247,15 @@ class ReferenceAuditTests(unittest.TestCase):
             for value in values:
                 self.assertNotIn(value, result.stdout)
 
+    def test_literal_sanitizer_marker_tokens_are_preserved(self):
+        import reference_audit
+        target = "foo[SLASH]bar[BACKSLASH]baz.md"
+        self.assertEqual(reference_audit.sanitize(target), target)
+        source = self.write("markers.md", f"[target]({target})\\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["records"][0]["target"], target)
+
     def test_spaced_absolute_and_dot_relative_targets(self):
         import reference_audit
         spaced = "/private fake/path.md"

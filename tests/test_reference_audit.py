@@ -548,7 +548,7 @@ class ReferenceAuditTests(unittest.TestCase):
         import os
         if os.name == "nt":
             self.skipTest("POSIX surrogateescape filename behavior")
-        raw_names = [b"invalid_\\xff.md", b"invalid_\\xfe.md"]
+        raw_names = [b"invalid_" + bytes([0xFF]) + b".md", b"invalid_" + bytes([0xFE]) + b".md"]
         created = []
         try:
             for raw_name in raw_names:
@@ -570,10 +570,8 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertEqual(len(set(locators)), 3)
             self.assertNotIn(chr(0xdcff), result.stdout)
             self.assertNotIn(chr(0xdcfe), result.stdout)
-            self.assertIn("invalid_~uDCFF~.md", locators)
-            self.assertIn("invalid_~uDCFE~.md", locators)
-            self.assertIn("~~uDCFF~~.md", locators)
-            self.assertEqual(len(locators), len(set(locators)) )
+            self.assertEqual(set(locators), {"invalid_~uDCFE~.md", "invalid_~uDCFF~.md", "~~uDCFF~~.md"})
+            self.assertEqual(len(locators), len(set(locators)))
             table = reference_audit.render_table(data)
             self.assertIn("invalid_~uDCFF~.md", table)
             self.assertIn("~~uDCFF~~.md", table)

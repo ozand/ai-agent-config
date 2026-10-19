@@ -14,6 +14,7 @@ from pathlib import Path
 MAX_FILE_BYTES = 1_000_000
 MAX_DEPTH = 8
 HAS_SECURE_POSIX_OPEN = os.name != "nt" and hasattr(os, "O_NOFOLLOW") and os.open in os.supports_dir_fd
+MAX_RECORDS = 10000
 LINK = re.compile(r'!?\[[^\]\n]*+\]\(\s*(<[^>\n]{1,4096}>|[^\s()]{1,4096})(?:\s+["\'][^"\']{0,4096}["\'])?\s*\)')
 URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
@@ -21,7 +22,7 @@ PATH_RUN = re.compile(r"(?<![\w/])[\w./-]+")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
 ENCODED_SECRET = re.compile(r"(?i)(?:api(?:%5f|_)key|access(?:%5f|_)token|client(?:%5f|_)secret|password|passwd)(?:%3d|=)[A-Za-z0-9%._/+=-]{12,}")
 URI_AUTHORITY = re.compile(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#]*")
-ABS = re.compile(r"(?i)file:(?:(?:/{1,3}|\\\\)|[A-Za-z]:[\\/])[^`<>\"']*|file:(?:%2f){1,3}[^`<>\"']*|file:[A-Za-z]%3a(?:%2f|%5c)[^`<>\"']*|file:[A-Za-z]:[^`<>\"']*|file:[A-Za-z]%3a[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
+ABS = re.compile(r"(?i)file:(?:[^`<>\"']*)|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
 DYNAMIC = re.compile(r"(?:\$\{[^}]{1,512}\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]{1,512}\}\})(?:[\\/][^\s<>()\]]+)?")
 
 @dataclass(frozen=True)
@@ -103,9 +104,13 @@ def extract(text):
     lines = text.splitlines()
     front = len(lines) > 1 and lines[0].strip() == "---"
     end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
+    total_records = 0
     for number, line in enumerate(lines, 1):
-        links = list(LINK.finditer(line))
-        found = [(m.group(1).strip("<>"), "markdown_link", m.span(1)) for m in links]
+        found = []
+        for match in LINK.finditer(line):
+            if len(found) + total_records >= MAX_RECORDS:
+                raise ValueError("record limit exceeded")
+            found.append((match.group(1).strip("<>"), "markdown_link", match.span(1)))
         uri_spans = sorted(m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
                      if not re.match(r"(?i)^[A-Z]:[\\/]", m.group(0)))
         def overlaps_uri(match):
@@ -115,9 +120,17 @@ def extract(text):
             return (i > 0 and uri_spans[i - 1][1] > start) or (i < len(uri_spans) and uri_spans[i][0] < end)
         markdown_spans = sorted(span for _, _, span in found)
         accepted_spans = []
-        candidates = []
+        class BoundedCandidates(list):
+            def append(self, item):
+                if len(self) >= MAX_RECORDS:
+                    raise ValueError("record limit exceeded")
+                super().append(item)
+            def extend(self, items):
+                for item in items:
+                    self.append(item)
+        candidates = BoundedCandidates()
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line) if not overlaps_uri(m))
-        for match in re.finditer(r"(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])/(?!/)|\\\\)[^\s`<>\"']+", line):
+        for match in re.finditer(r"(?i)\bfile:[^\s<>()]+|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])/(?!/)|\\\\)[^\s`<>\"']+", line):
             end = match.start()
             while end < len(line) and not line[end].isspace() and line[end] not in "<>\"'`()[]{}":
                 end += 1
@@ -165,6 +178,10 @@ def extract(text):
                 continue
             found.append(candidate)
             accepted_spans.append(span)
+        total_records += len(found)
+        if total_records > MAX_RECORDS:
+            raise ValueError("record limit exceeded")
+        total_records += len(found)
         for target, relation, _ in sorted(found, key=lambda item: item[2]):
             yield number, target, relation, line
 
@@ -276,8 +293,11 @@ def build_records(files, roots):
     for path, _, source, _, text in inputs:
         for line, target, relation, context in extract(text):
             kind = classify_binding(target)
+            decoded_target = None
             exact, entity, candidates = "unchecked", "unchecked", ()
-            if kind in {"relative", "entity_or_relative"} and not URI.match(target):
+            if "\x00" in target:
+                exact, entity = "unchecked", "unchecked"
+            if kind in {"relative", "entity_or_relative"} and "\x00" not in target and not URI.match(target):
                 if relation in {"markdown_link", "frontmatter_candidate"} and kind != "dynamic":
                     local_target = re.split(r"[?#]", target, maxsplit=1)[0]
                     if not local_target:
@@ -285,8 +305,10 @@ def build_records(files, roots):
                     elif local_target:
                         from urllib.parse import unquote, urlsplit
                         parsed = urlsplit(local_target)
+                        decoded_target = None
                         try:
                             local_target = unquote(parsed.path, errors="strict")
+                            decoded_target = local_target
                         except UnicodeDecodeError:
                             exact = "unchecked"
                             local_target = ""
@@ -314,7 +336,8 @@ def build_records(files, roots):
                                         exact = "unchecked"
                                     else:
                                         exact = "unchecked"
-            named = tuple(sorted(names.get(Path(re.split(r"[?#]", target, maxsplit=1)[0]).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
+            lookup_target = decoded_target if relation == "markdown_link" and decoded_target is not None else target
+            named = tuple(sorted(names.get(Path(re.split(r"[?#]", lookup_target, maxsplit=1)[0]).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
             if kind == "dynamic":
                 named = ()
             if len(named) == 1:

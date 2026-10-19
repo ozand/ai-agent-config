@@ -94,10 +94,13 @@ def extract(text):
             if match and ("/" in match.group(1) or "." in match.group(1)):
                 candidates.append((match.group(1), "frontmatter_candidate", match.span(1)))
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?i)\b[A-Z]:[\\/][^\s<>()]+", line))
-        uri_spans = [m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
-                     if not re.match(r"(?i)^[A-Z]:[\\/]", m.group(0))]
+        uri_spans = sorted(m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
+                     if not re.match(r"(?i)^[A-Z]:[\\/]", m.group(0)))
+        def overlaps_uri(match):
+            i = bisect_left(uri_spans, (match.start(), -1))
+            return (i > 0 and uri_spans[i - 1][1] > match.start()) or (i < len(uri_spans) and uri_spans[i][0] < match.end())
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in PATH.finditer(line)
-                          if not any(m.start() < stop and begin < m.end() for begin, stop in uri_spans))
+                          if not overlaps_uri(m))
         for candidate in sorted(candidates, key=lambda item: (item[2][0], item[2][1], item[1])):
             span = candidate[2]
             i = bisect_left(markdown_spans, (span[0], -1))

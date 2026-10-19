@@ -163,6 +163,14 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(len(records), 5000)
         self.assertTrue(all(row[2] == "path_candidate" for row in records))
 
+    def test_mixed_uri_and_path_candidates_do_not_duplicate_or_emit_uri_fragments(self):
+        import reference_audit
+        line = " ".join(["https://example.test/a.md local.md"] * 2500)
+        records = list(reference_audit.extract(line))
+        self.assertEqual(len(records), 2500)
+        self.assertEqual({row[1] for row in records}, {"local.md"})
+        self.assertTrue(all(row[2] == "path_candidate" for row in records))
+
     def test_each_record_reports_bounded_search_scope(self):
         source = self.write("index.md", "See [guide](guide.md)\n")
         result = self.cli("--format", "json", str(source))

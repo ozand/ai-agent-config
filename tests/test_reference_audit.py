@@ -117,13 +117,36 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual([row[1] for row in records], ["local.md"])
         self.assertEqual(records[0][2], "path_candidate")
 
-    def test_distinct_dynamic_expressions_are_preserved_as_dynamic(self):
-        source = self.write("index.md", "Use ${ROOT}/one.md and ${OTHER}/two.md\n")
-        result = self.cli("--format", "json", str(source))
-        self.assertEqual(result.returncode, 0, result.stderr)
-        rows = json.loads(result.stdout)["records"]
-        self.assertEqual({row["target"] for row in rows}, {"${ROOT}/one.md", "${OTHER}/two.md"})
-        self.assertTrue(all(row["binding"] == "dynamic" and row["exact_path"] == "unchecked" for row in rows))
+    def test_supported_dynamic_family_is_one_complete_record(self):
+        import reference_audit
+        forms = ["${ROOT}/one.md", "$ROOT/two.md", "%ROOT%/three.md", "{{ROOT}}/four.md"]
+        for form in forms:
+            for line in (form, f"[reference]({form})"):
+                rows = list(reference_audit.extract(line))
+                self.assertEqual(len(rows), 1, (form, line, rows))
+                self.assertEqual(rows[0][1], form)
+                self.assertEqual(reference_audit.classify_binding(rows[0][1]), "dynamic")
+        source = self.write("index.md", "Use " + " and ".join(forms) + "\\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for form in forms:
+                self.assertIn(form, result.stdout)
+            self.assertNotIn("[PATH]", result.stdout)
+
+    def test_supported_absolute_path_families_classify_and_redact(self):
+        import reference_audit
+        paths = ["/private/posix.md", "//corp-host/share/private.md", "\\\\corp-host\\share\\private.md",
+                 "\\Users\\person\\private.md", "C:/Users/person/private.md", "C:\\Users\\person\\private.md"]
+        for path in paths:
+            self.assertEqual(reference_audit.classify_binding(path), "host_absolute", path)
+            self.assertEqual(reference_audit.sanitize(path), "[PATH]", path)
+            for line in (f"[private]({path})", path):
+                rows = list(reference_audit.extract(line))
+                self.assertEqual([reference_audit.classify_binding(row[1]) for row in rows], ["host_absolute"], (path, rows))
+        for url in ("https://example.test/a.md", "mailto:person@example.test"):
+            self.assertEqual(reference_audit.classify_binding(url), "external")
+            self.assertEqual(reference_audit.sanitize(url), url)
 
     def test_overlapping_roots_register_each_source_once(self):
         import reference_audit

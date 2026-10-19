@@ -18,7 +18,8 @@ URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+)")
-ABS = re.compile(r"(?i)file:(?:/{1,3}|\\\\)[^\s`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<!/)\/(?!/)|\\\\|//[^/\s]+/)[^\s`<>\"']+")
+ABS = re.compile(r"(?i)file:(?:/{1,3}|\\\\)[^\s`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<!/)\/(?!/)|\\\\|\\(?!\\)|//[^/\s]+/)[^\s`<>\"']+")
+DYNAMIC = re.compile(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]+\}\})(?:[\\/][^\s<>()]+)?")
 
 @dataclass(frozen=True)
 class Record:
@@ -37,6 +38,7 @@ class Record:
 def sanitize(text: str) -> str:
     text = SECRET.sub("[REDACTED]", text)
     text = re.sub(r"(?<=[)}])/(?!/)", "[SLASH]", text)
+    text = DYNAMIC.sub(lambda match: match.group(0).replace("/", "[SLASH]"), text)
     text = re.sub(r"(?i)file:(?:/{1,3}|\\\\)[^\s`<>\"']*", "[PATH]", text)
     text = re.sub(r"(?i)(?<=file:)/{1,3}", "[SLASH]", text)
     return ABS.sub("[PATH]", text).replace("[SLASH]", "/")
@@ -49,9 +51,9 @@ def within(path: Path, root: Path) -> bool:
         return False
 
 def classify_binding(target: str) -> str:
-    if re.search(r"(?:\$\{|\$[A-Za-z]|%[A-Za-z])", target) or "{{" in target: return "dynamic"
+    if re.match(r"^[A-Za-z]:[\\/]", target) or target.startswith(("/", "\\")): return "host_absolute"
+    if DYNAMIC.fullmatch(target): return "dynamic"
     if URI.match(target): return "external"
-    if target.startswith(("/", "\\")) or re.match(r"^[A-Za-z]:", target): return "host_absolute"
     if target.startswith(("./", "../")) or "/" in target: return "relative"
     return "entity_or_relative"
 
@@ -64,10 +66,14 @@ def extract(text):
         links = list(LINK.finditer(line))
         found = [(m.group(1).strip("<>") , "markdown_link", m.span(1)) for m in links]
         network_matches = list(re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line))
+        windows_root_matches = list(re.finditer(r"(?<![\w:])\\[A-Za-z0-9_.-]+(?:\\[^\s<>\"']+)+", line))
+        for match in windows_root_matches:
+            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
+                found.append((match.group(0), "path_candidate", match.span()))
         for match in network_matches:
             if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
                 found.append((match.group(0), "path_candidate", match.span()))
-        dynamic_matches = list(re.finditer(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*)(?:/[^\s]+)?", line))
+        dynamic_matches = list(DYNAMIC.finditer(line))
         dynamic_spans = [m.span() for m in dynamic_matches]
         for match in dynamic_matches:
             if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
@@ -76,11 +82,16 @@ def extract(text):
             match = FRONT.match(line)
             if match and ("/" in match.group(1) or "." in match.group(1)):
                 found.append((match.group(1), "frontmatter_candidate", match.span(1)))
-        uri_spans = [m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)]
+        drive_matches = list(re.finditer(r"(?i)\b[A-Z]:[\\/][^\s<>()]+", line))
+        for match in drive_matches:
+            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
+                found.append((match.group(0), "path_candidate", match.span()))
+        uri_spans = [m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
+                     if not re.match(r"(?i)^[A-Z]:[\\/]", m.group(0))]
         for match in PATH.finditer(line):
-            if any(match.start() < end and start < match.end() for _, _, span in found for start, end in [span]):
-                continue
             if any(match.start() < end and start < match.end() for start, end in uri_spans):
+                continue
+            if any(match.start() < end and start < match.end() for _, _, span in found for start, end in [span]):
                 continue
             if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
                 found.append((match.group(0), "path_candidate", match.span()))

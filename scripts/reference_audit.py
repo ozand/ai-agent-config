@@ -51,7 +51,7 @@ def sanitize(text: str) -> str:
         return "[REDACTED]" if SECRET.search(decoded) or ENCODED_SECRET.search(decoded) else match.group(0)
     text = re.sub(r"(?i)(?:api|access|client|password|passwd)(?:%[0-9a-f]{2}|[A-Za-z0-9_=-]){1,512}", redact_encoded_secret, text)
     text = re.sub(r"(?i)bearer(?:%20|\s+)[A-Za-z0-9._~+/%=-]{12,}", redact_encoded_secret, text)
-    text = re.sub(r"(?i)authorization(?:%3d|=)bearer(?:%20|\s+)[A-Za-z0-9._~+/%=-]{12,}", redact_encoded_secret, text)
+    text = re.sub(r"(?i)authorization(?:%3d|=)(?:bearer|basic)(?:%20|\s+)[A-Za-z0-9._~+/%=-]{12,}", redact_encoded_secret, text)
     def redact_authority(match):
         authority = match.group(0)
         scheme, rest = authority.split("://", 1)
@@ -416,7 +416,7 @@ def build_records(files, roots, max_records=None):
                                         exact = "unchecked"
                                     else:
                                         exact = "unchecked"
-            lookup_target = decoded_target if relation == "markdown_link" and decoded_target is not None else target
+            lookup_target = decoded_target if decoded_target is not None else target
             try:
                 lookup_basename = Path(re.split(r"[?#]", lookup_target, maxsplit=1)[0]).name.casefold()
             except ValueError:

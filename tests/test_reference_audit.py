@@ -715,13 +715,24 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(dynamic["target"], "${ROOT}/other.md")
         self.assertEqual(dynamic["exact_path"], "unchecked")
 
-    def test_encoded_bearer_credential_is_redacted_in_all_views(self):
-        source = self.write("bearer.md", "Bearer%20synthetic_encoded_bearer_credential_123\nAuthorization%3DBearer%20synthetic_authorization_bearer_credential_123\n")
+    def test_encoded_bearer_and_basic_credentials_are_redacted_in_all_views(self):
+        source = self.write("bearer.md", "Bearer%20synthetic_encoded_bearer_credential_123\nAuthorization%3DBearer%20synthetic_authorization_bearer_credential_123\nAuthorization=Basic c3ludGhldGljOnNlY3JldA==\nAuthorization%3DBasic%20c3ludGhldGljOnNlY3JldA%3D%3D\n")
         for view in ("json", "table", "mermaid", "all"):
             result = self.cli("--format", view, str(source))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotIn("synthetic_encoded_bearer_credential_123", result.stdout)
             self.assertNotIn("synthetic_authorization_bearer_credential_123", result.stdout)
+            self.assertNotIn("c3ludGhldGljOnNlY3JldA", result.stdout)
+
+    def test_frontmatter_percent_encoded_basename_matches_supplied_input(self):
+        source = self.write("index.md", "---\ninclude: caf%C3%A9.md\n---\n")
+        target = self.write("café.md", "target\n")
+        result = self.cli("--format", "json", str(source), str(target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        row = json.loads(result.stdout)["records"][0]
+        self.assertEqual(row["target"], "caf%C3%A9.md")
+        self.assertEqual(row["exact_path"], "exact_path")
+        self.assertEqual(row["entity_match"], "entity_match")
 
     def test_sensitive_filename_is_not_emitted_in_any_view(self):
         secret_name = "ghp_" + "Q" * 24 + ".md"

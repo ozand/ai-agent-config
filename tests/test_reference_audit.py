@@ -214,6 +214,14 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(reference_audit.choose_root(source.resolve(), roots), 1)
         self.assertIsNone(reference_audit.choose_root(source.resolve(), [self.allowed]))
 
+    def test_long_malformed_link_and_dynamic_prefixes_finish_bounded(self):
+        import reference_audit
+        malformed = "[" * 30000 + " ordinary text"
+        dynamic = "${" * 30000
+        self.assertEqual(list(reference_audit.extract(malformed)), [])
+        self.assertEqual(list(reference_audit.extract(dynamic)), [])
+        self.assertEqual(reference_audit.sanitize("[x](" + "a" * 100000 + ")"), "[x](" + "a" * 100000 + ")")
+
     def test_supported_secret_classes_are_redacted_in_all_formats(self):
         values = ["api_key=SYNTHETIC_SECRET_123", "access_token=FAKE_TOKEN_456",
                   "AKIA" + "A" * 16, "AIza" + "B" * 32]
@@ -230,6 +238,9 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(reference_audit.sanitize(spaced), "[PATH]")
         self.assertEqual(reference_audit.sanitize("./guide.md"), "./guide.md")
         self.assertEqual(reference_audit.sanitize("../README.md"), "../README.md")
+        self.assertEqual(reference_audit.sanitize(r".\guide.md"), r".\guide.md")
+        self.assertEqual(reference_audit.sanitize(r"..\README.md"), r"..\README.md")
+        self.assertEqual(reference_audit.sanitize(r"\private\absolute.md"), "[PATH]")
         self.write("README.md", "top\n")
         self.write("docs/index.md", "See [parent](../README.md) and [escape](../../outside.md).\n")
         source = self.allowed / "docs/index.md"

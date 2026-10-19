@@ -36,6 +36,7 @@ class Record:
     candidates: tuple[str, ...]
 
 def sanitize(text: str) -> str:
+    text = "".join(char if char in "\\t\\n\\r" or (ord(char) >= 32 and not 0x7f <= ord(char) <= 0x9f) else "�" for char in text)
     text = SECRET.sub("[REDACTED]", text)
     text = re.sub(r"(?<=[)}])/(?!/)", "[SLASH]", text)
     text = DYNAMIC.sub(lambda match: match.group(0).replace("/", "[SLASH]"), text)
@@ -43,12 +44,25 @@ def sanitize(text: str) -> str:
     text = re.sub(r"(?i)(?<=file:)/{1,3}", "[SLASH]", text)
     return ABS.sub("[PATH]", text).replace("[SLASH]", "/")
 
+def normalize_windows_final_path(value: str) -> str:
+    if value.startswith("\\\\?\\UNC\\"):
+        return "\\\\" + value[len("\\\\?\\UNC\\"):]
+    if value.startswith("\\\\?\\"):
+        return value[len("\\\\?\\"):]
+    return value
+
+
 def within(path: Path, root: Path) -> bool:
     try:
         path.relative_to(root)
         return True
     except ValueError:
         return False
+
+def choose_root(path: Path, roots: list[Path], max_depth: int = MAX_DEPTH) -> int | None:
+    eligible = [i for i, root in enumerate(roots) if within(path, root) and len(path.relative_to(root).parts) <= max_depth]
+    return min(eligible, key=lambda i: (len(path.relative_to(roots[i]).parts), i)) if eligible else None
+
 
 def classify_binding(target: str) -> str:
     if re.match(r"^[A-Za-z]:[\\/]", target) or target.startswith(("/", "\\")): return "host_absolute"
@@ -131,7 +145,9 @@ def build_records(files, roots):
         root_ids = [i for i, root in enumerate(allowed) if within(real, root)]
         if not root_ids:
             raise ValueError("input outside declared roots")
-        selected_root = min(root_ids, key=lambda index: (len(allowed[index].parts), index))
+        selected_root = choose_root(real, allowed)
+        if selected_root is None:
+            raise ValueError("input exceeds depth limit")
         root = allowed[selected_root]
         relative = real.relative_to(root)
         if not relative.parts:
@@ -151,7 +167,7 @@ def build_records(files, roots):
                 length = get_final(handle, buffer, len(buffer), 0)
                 if not length or length >= len(buffer):
                     raise ValueError("cannot verify opened input path")
-                final = Path(buffer.value.removeprefix("\\\\?\\"))
+                final = Path(normalize_windows_final_path(buffer.value))
                 if not within(final.resolve(strict=True), root):
                     raise ValueError("input outside declared roots")
                 file_stat = os.fstat(fd)
@@ -254,7 +270,7 @@ def make_report(records, source_map=None):
     return {"schema_version": 1, "sources": dict(sorted((source_map or {}).items())), "records": rows, "counts": counts}
 
 def table_text(value: str) -> str:
-    return str(value).replace("|", "\\\\|").replace("\r", " ").replace("\n", " ")
+    return sanitize(str(value)).replace("|", "\\\\|").replace("\r", " ").replace("\n", " ").replace("�", " ")
 
 def render_table(data):
     lines = ["| Source ID | Source path | ID | Line | Target | Relation | Exact path | Entity | Binding | Requirement |",

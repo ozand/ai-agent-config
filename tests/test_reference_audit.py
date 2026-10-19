@@ -134,6 +134,37 @@ class ReferenceAuditTests(unittest.TestCase):
                 self.assertIn(form, result.stdout)
             self.assertNotIn("[PATH]", result.stdout)
 
+    def test_terminal_controls_are_neutralized_in_public_text_and_renderers(self):
+        import reference_audit
+        control_target = "osc" + chr(27) + "]52;c;payload" + chr(7) + "done.md"
+        self.assertNotIn(chr(27), reference_audit.public_text(control_target))
+        self.assertNotIn(chr(7), reference_audit.public_text(control_target))
+        data = {"sources": {"S1": "source"}, "records": [{"id": "R1", "source": "S1", "line": 1,
+            "target": control_target, "relation": "markdown_link", "exact_path": "unchecked",
+            "entity_match": "unchecked", "binding": "relative", "requirement": "unknown"}]}
+        for rendered in (reference_audit.render_table(data), reference_audit.render_mermaid(data)):
+            self.assertNotIn(chr(27), rendered)
+            self.assertNotIn(chr(7), rendered)
+
+    def test_windows_extended_unc_final_path_normalization(self):
+        import reference_audit
+        self.assertEqual(reference_audit.normalize_windows_final_path(r"\\?\UNC\server\share\file.md"),
+                         r"\\server\share\file.md")
+        self.assertEqual(reference_audit.normalize_windows_final_path(r"\\?\C:\folder\file.md"),
+                         r"C:\folder\file.md")
+        self.assertEqual(reference_audit.normalize_windows_final_path(r"C:\folder\file.md"), r"C:\folder\file.md")
+
+    def test_depth_selection_uses_nearest_eligible_overlapping_root(self):
+        import reference_audit
+        deep = self.allowed.joinpath(*(["a"] * 9))
+        deep.mkdir(parents=True)
+        nested = deep
+        source = nested / "source.md"
+        source.write_text("source\n", encoding="utf-8")
+        roots = [self.allowed, nested]
+        self.assertEqual(reference_audit.choose_root(source.resolve(), roots), 1)
+        self.assertIsNone(reference_audit.choose_root(source.resolve(), [self.allowed]))
+
     def test_supported_secret_classes_are_redacted_in_all_formats(self):
         values = ["api_key=SYNTHETIC_SECRET_123", "access_token=FAKE_TOKEN_456",
                   "AKIA" + "A" * 16, "AIza" + "B" * 32]
@@ -175,16 +206,17 @@ class ReferenceAuditTests(unittest.TestCase):
 
     def test_overlapping_roots_register_each_source_once(self):
         import reference_audit
-        nested = self.allowed / "nested"
-        nested.mkdir()
-        source = self.write("nested/index.md", "See [target](target.md)\n")
-        target = self.write("nested/target.md", "target\n")
+        nested = self.allowed.joinpath(*(["d"] * 9))
+        nested.mkdir(parents=True)
+        source = nested / "index.md"
+        source.write_text("See [target](target.md)\n", encoding="utf-8")
+        target = nested / "target.md"
+        target.write_text("target\n", encoding="utf-8")
         records, sources = reference_audit.build_records([source, target], [self.allowed, nested])
-        expected_sources = {reference_audit.safe_id(f"root0/nested/{source.name}"),
-                            reference_audit.safe_id(f"root0/nested/{target.name}")}
-        self.assertEqual(set(sources), expected_sources)
-        self.assertEqual({row.source for row in records}, {reference_audit.safe_id(f"root0/nested/{source.name}")})
-        self.assertEqual(set(sources.values()), {"nested/index.md", "nested/target.md"})
+        expected_source = reference_audit.safe_id("root1/index.md")
+        self.assertEqual(set(sources), {expected_source, reference_audit.safe_id("root1/target.md")})
+        self.assertEqual({row.source for row in records}, {expected_source})
+        self.assertEqual(set(sources.values()), {"index.md", "target.md"})
 
     def test_markdown_optional_quoted_titles_resolve_destination(self):
         target = self.write("guide.md", "content\n")

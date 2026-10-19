@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Bounded offline inventory for explicitly supplied Markdown inputs."""
 import argparse
+from bisect import bisect_left, insort
 import hashlib
 import json
 import os
@@ -18,6 +19,7 @@ URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
+USERINFO = re.compile(r"(?i)([A-Za-z][A-Za-z0-9+.-]*://)[^/@\s]+(?::[^/@\s]*)?@")
 ABS = re.compile(r"(?i)file:(?:/{1,3}|\\\\)[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<!/)\/(?!/)|\\\\|\\(?!\\)|//[^/\s]+/)[^`<>\"']*")
 DYNAMIC = re.compile(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]+\}\})(?:[\\/][^\s<>()\]]+)?")
 
@@ -34,10 +36,12 @@ class Record:
     binding: str
     evidence: str
     candidates: tuple[str, ...]
+    search_scope: str = ""
 
 def sanitize(text: str) -> str:
     text = "".join(char if char in "\\t\\n\\r" or (ord(char) >= 32 and not 0x7f <= ord(char) <= 0x9f) else "�" for char in text)
     text = SECRET.sub("[REDACTED]", text)
+    text = USERINFO.sub(r"\1[REDACTED]@", text)
     text = re.sub(r"(?<=[)}])/(?!/)", "[SLASH]", text)
     text = DYNAMIC.sub(lambda match: match.group(0).replace("/", "[SLASH]"), text)
     text = re.sub(r"(?i)file:(?:/{1,3}|\\\\)[^`<>\"']*", "[PATH]", text)
@@ -78,38 +82,32 @@ def extract(text):
     end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
     for number, line in enumerate(lines, 1):
         links = list(LINK.finditer(line))
-        found = [(m.group(1).strip("<>") , "markdown_link", m.span(1)) for m in links]
-        network_matches = list(re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line))
-        windows_root_matches = list(re.finditer(r"(?<![\w:])\\[A-Za-z0-9_.-]+(?:\\[^\s<>\"']+)+", line))
-        for match in windows_root_matches:
-            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
-                found.append((match.group(0), "path_candidate", match.span()))
-        for match in network_matches:
-            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
-                found.append((match.group(0), "path_candidate", match.span()))
-        dynamic_matches = list(DYNAMIC.finditer(line))
-        dynamic_spans = [m.span() for m in dynamic_matches]
-        for match in dynamic_matches:
-            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
-                found.append((match.group(0), "dynamic_candidate", match.span()))
+        found = [(m.group(1).strip("<>"), "markdown_link", m.span(1)) for m in links]
+        markdown_spans = sorted(span for _, _, span in found)
+        accepted_spans = []
+        candidates = []
+        candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line))
+        candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![\w:])\\[A-Za-z0-9_.-]+(?:\\[^\s<>\"']+)+", line))
+        candidates.extend((m.group(0), "dynamic_candidate", m.span()) for m in DYNAMIC.finditer(line))
         if front and 1 < number <= end:
             match = FRONT.match(line)
             if match and ("/" in match.group(1) or "." in match.group(1)):
-                found.append((match.group(1), "frontmatter_candidate", match.span(1)))
-        drive_matches = list(re.finditer(r"(?i)\b[A-Z]:[\\/][^\s<>()]+", line))
-        for match in drive_matches:
-            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
-                found.append((match.group(0), "path_candidate", match.span()))
+                candidates.append((match.group(1), "frontmatter_candidate", match.span(1)))
+        candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?i)\b[A-Z]:[\\/][^\s<>()]+", line))
         uri_spans = [m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
                      if not re.match(r"(?i)^[A-Z]:[\\/]", m.group(0))]
-        for match in PATH.finditer(line):
-            if any(match.start() < end and start < match.end() for start, end in uri_spans):
+        candidates.extend((m.group(0), "path_candidate", m.span()) for m in PATH.finditer(line)
+                          if not any(m.start() < stop and begin < m.end() for begin, stop in uri_spans))
+        for candidate in sorted(candidates, key=lambda item: (item[2][0], item[2][1], item[1])):
+            span = candidate[2]
+            i = bisect_left(markdown_spans, (span[0], -1))
+            if (i > 0 and markdown_spans[i - 1][1] > span[0]) or (i < len(markdown_spans) and markdown_spans[i][0] < span[1]):
                 continue
-            if any(match.start() < end and start < match.end() for _, _, span in found for start, end in [span]):
+            if accepted_spans and accepted_spans[-1][1] > span[0]:
                 continue
-            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
-                found.append((match.group(0), "path_candidate", match.span()))
-        for target, relation, _ in found:
+            found.append(candidate)
+            accepted_spans.append(span)
+        for target, relation, _ in sorted(found, key=lambda item: item[2]):
             yield number, target, relation, line
 
 
@@ -121,7 +119,7 @@ def public_text(value: str) -> str:
 
 def public_record(record: Record) -> dict:
     row = asdict(record)
-    for key in ("source", "target", "evidence"):
+    for key in ("source", "target", "evidence", "search_scope"):
         row[key] = public_text(str(row[key]))
     row["candidates"] = [public_text(str(candidate)) for candidate in row["candidates"]]
     return row
@@ -252,11 +250,12 @@ def build_records(files, roots):
                 kind = "dynamic"
                 exact, entity, candidates = "unchecked", "unchecked", ()
             requirement = "unknown"
+            scope = f"exact_path:declared_roots({len(allowed)});entity_match:supplied_input_basenames"
             records.append(Record("", source, line, sanitize(target), relation, requirement,
-                exact, entity, kind, f"line:{line};kind:{relation}", candidates))
+                exact, entity, kind, f"line:{line};kind:{relation}", candidates, scope))
     records.sort(key=lambda item: (item.source, item.line, item.target, item.relation))
     rows = [Record(f"R{i:04d}", item.source, item.line, item.target, item.relation,
-        item.requirement, item.exact_path, item.entity_match, item.binding, item.evidence, item.candidates)
+        item.requirement, item.exact_path, item.entity_match, item.binding, item.evidence, item.candidates, item.search_scope)
         for i, item in enumerate(records, 1)]
     source_map = {source: locator for _, _, source, locator, _ in inputs}
     return rows, source_map
@@ -273,13 +272,13 @@ def table_text(value: str) -> str:
     return sanitize(str(value)).replace("|", "\\\\|").replace("\r", " ").replace("\n", " ").replace("�", " ")
 
 def render_table(data):
-    lines = ["| Source ID | Source path | ID | Line | Target | Relation | Exact path | Entity | Binding | Requirement |",
-        "|---|---|---:|---:|---|---|---|---|---|---|"]
+    lines = ["| Source ID | Source path | ID | Line | Target | Relation | Exact path | Entity | Binding | Requirement | Search scope |",
+        "|---|---|---:|---:|---|---|---|---|---|---|---|"]
     paths = data.get("sources", {})
     for row in data["records"]:
         cells = [table_text(row[key]) for key in ("source", "id")]
         cells.insert(1, table_text(paths.get(row["source"], "[UNKNOWN]")))
-        cells.extend([str(row["line"]), *(table_text(row[key]) for key in ("target", "relation", "exact_path", "entity_match", "binding", "requirement"))])
+        cells.extend([str(row["line"]), *(table_text(row.get(key, "")) for key in ("target", "relation", "exact_path", "entity_match", "binding", "requirement", "search_scope"))])
         lines.append("| " + " | ".join(cells) + " |")
     return "\n".join(lines)
 

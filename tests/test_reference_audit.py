@@ -141,10 +141,37 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertNotIn(chr(7), reference_audit.public_text(control_target))
         data = {"sources": {"S1": "source"}, "records": [{"id": "R1", "source": "S1", "line": 1,
             "target": control_target, "relation": "markdown_link", "exact_path": "unchecked",
-            "entity_match": "unchecked", "binding": "relative", "requirement": "unknown"}]}
+            "entity_match": "unchecked", "binding": "relative", "requirement": "unknown",
+            "search_scope": "exact_path:declared_roots(1);entity_match:supplied_input_basenames"}]}
         for rendered in (reference_audit.render_table(data), reference_audit.render_mermaid(data)):
             self.assertNotIn(chr(27), rendered)
             self.assertNotIn(chr(7), rendered)
+
+    def test_uri_userinfo_credentials_redacted_all_views(self):
+        source = self.write("userinfo.md", "[link](https://synthetic_user:synthetic_pass@example.test/path)\\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("synthetic_user", result.stdout)
+            self.assertNotIn("synthetic_pass", result.stdout)
+            self.assertIn("example.test/path", result.stdout)
+            self.assertNotIn("synthetic_user:synthetic_pass", result.stdout)
+
+    def test_large_path_candidate_line_has_linear_span_dedup(self):
+        import reference_audit
+        records = list(reference_audit.extract(" ".join(["item.md"] * 5000)))
+        self.assertEqual(len(records), 5000)
+        self.assertTrue(all(row[2] == "path_candidate" for row in records))
+
+    def test_each_record_reports_bounded_search_scope(self):
+        source = self.write("index.md", "See [guide](guide.md)\n")
+        result = self.cli("--format", "json", str(source))
+        data = json.loads(result.stdout)
+        self.assertIn("search_scope", data["records"][0])
+        scope = data["records"][0]["search_scope"]
+        self.assertIn("declared_roots", scope)
+        self.assertIn("entity_match:supplied_input_basenames", scope)
+        self.assertNotIn(str(self.allowed), scope)
 
     def test_windows_extended_unc_final_path_normalization(self):
         import reference_audit
@@ -371,11 +398,11 @@ class ReferenceAuditTests(unittest.TestCase):
         data = {"records": [{"id": "R1", "source": "S1", "line": 1,
             "target": "first\r\nsecond", "relation": "markdown_link",
             "exact_path": "unchecked", "entity_match": "unchecked",
-            "binding": "relative", "requirement": "unknown"}]}
+            "binding": "relative", "requirement": "unknown", "search_scope": "exact_path:declared_roots(1);entity_match:supplied_input_basenames"}]}
         table = reference_audit.render_table(data)
         self.assertNotIn("\r", table)
         self.assertEqual(len(table.splitlines()), 3)
-        self.assertEqual(table.splitlines()[-1].count("|"), 11)
+        self.assertEqual(table.splitlines()[-1].count("|"), 12)
         self.assertIn("first  second", table)
         self.assertIn("first  second", table)
 

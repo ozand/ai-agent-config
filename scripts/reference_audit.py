@@ -183,7 +183,7 @@ def public_record(record: Record) -> dict:
     return row
 
 def mermaid_text(value: str) -> str:
-    return public_safe_text(sanitize(value)).replace('"', "'").replace("[", "(").replace("]", ")").replace("\n", " ").replace("\r", " ")
+    return str(value).replace('"', "'").replace("[", "(").replace("]", ")").replace("\n", " ").replace("\r", " ")
 
 def build_records(files, roots):
     allowed = [root.resolve(strict=True) for root in roots]
@@ -363,7 +363,7 @@ def public_locator(value: str) -> str:
 
 
 def table_text(value: str) -> str:
-    value = public_safe_text(str(value)).replace("\r", " ").replace("\n", " ").replace("�", " ")
+    value = str(value).replace("\r", " ").replace("\n", " ").replace("�", " ")
     output = []
     i = 0
     segment = 0
@@ -400,7 +400,7 @@ def render_mermaid(data):
         source_path = mermaid_text(data.get("sources", {}).get(row["source"], "[UNKNOWN]"))
         target = "T_" + row["id"]
         label = mermaid_text(f"{row['relation']}:{row['exact_path']}/{row['entity_match']}")
-        name = mermaid_text(row["target"])
+        name = mermaid_text(public_text(row["target"]))
         lines.append(f'  {source}["{source_path}"] -->|{label}| {target}["{name}"]')
     return "\n".join(lines)
 

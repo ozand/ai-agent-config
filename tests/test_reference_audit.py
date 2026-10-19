@@ -573,7 +573,15 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertTrue(any(r"\udcff" in value for value in locators))
             self.assertTrue(any(r"\udcfe" in value for value in locators))
             self.assertTrue(any("literal_escape.md" == value for value in locators))
+            self.assertTrue(any("~uDCFF~" in value for value in locators))
+            self.assertTrue(any("~~uDCFF~~" in value for value in locators))
             self.assertIn("literal_escape.md", locators)
+            table = reference_audit.render_table(data)
+            self.assertIn("~uDCFF~", table)
+            self.assertIn("~~uDCFF~~", table)
+            graph = reference_audit.render_mermaid(data)
+            self.assertIn("~uDCFF~", graph)
+            self.assertIn("~~uDCFF~~", graph)
         finally:
             for item in created:
                 try:

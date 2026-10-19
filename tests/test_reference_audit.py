@@ -124,6 +124,18 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertNotIn("outside-secret", result.stdout)
         self.assertNotIn("exact_path", [r["exact_path"] for r in data["records"]])
 
+    def test_table_projection_normalizes_control_lines(self):
+        import reference_audit
+        data = {"records": [{"id": "R1", "source": "S1", "line": 1,
+            "target": "first\r\nsecond", "relation": "markdown_link",
+            "exact_path": "unchecked", "entity_match": "unchecked",
+            "binding": "relative", "requirement": "unknown"}]}
+        table = reference_audit.render_table(data)
+        self.assertNotIn("\r", table)
+        self.assertEqual(table.count("\\n| R1 |"), 1)
+        self.assertEqual(table.count("| R1 |"), 1)
+        self.assertIn("first  second", table)
+
     def test_size_limit_and_invalid_utf8_fail_closed(self):
         large = self.write("large.md", "x" * 1_000_001)
         self.assertEqual(self.cli("--format", "json", str(large)).returncode, 2)

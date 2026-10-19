@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Bounded offline inventory for explicitly supplied Markdown inputs."""
 import argparse
-import ctypes
 import hashlib
 import json
-import msvcrt
 import os
 import re
 import stat
@@ -92,6 +90,8 @@ def build_records(files, roots):
         if len(relative.parts) > MAX_DEPTH:
             raise ValueError("input exceeds depth limit")
         if os.name == "nt":
+            import ctypes
+            import msvcrt
             fd = os.open(real, os.O_RDONLY | getattr(os, "O_BINARY", 0))
             try:
                 handle = msvcrt.get_osfhandle(fd)
@@ -189,12 +189,15 @@ def make_report(records):
         for value in sorted({row[field] for row in rows})} for field in fields}
     return {"schema_version": 1, "records": rows, "counts": counts}
 
+def table_text(value: str) -> str:
+    return str(value).replace("|", "\\\\|").replace("\r", " ").replace("\n", " ")
+
 def render_table(data):
     keys = ("id", "source", "line", "target", "relation", "exact_path", "entity_match", "binding", "requirement")
     lines = ["| ID | Source | Line | Target | Relation | Exact path | Entity | Binding | Requirement |",
         "|---|---|---:|---|---|---|---|---|---|"]
     for row in data["records"]:
-        cells = [str(row[key]).replace("|", "\\\\|") for key in keys]
+        cells = [table_text(row[key]) for key in keys]
         lines.append("| " + " | ".join(cells) + " |")
     return "\\n".join(lines)
 

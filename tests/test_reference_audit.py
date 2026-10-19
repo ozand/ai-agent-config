@@ -117,6 +117,16 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual([row[1] for row in records], ["local.md"])
         self.assertEqual(records[0][2], "path_candidate")
 
+    def test_percent_encoded_file_uri_absolute_paths_redacted(self):
+        import reference_audit
+        for target in ("file:C%3A/Users/synthetic/private.md", "file:%2Fhome/synthetic/private.md"):
+            self.assertEqual(reference_audit.sanitize(target), "[PATH]", target)
+            source = self.write("encoded-file.md", f"[private]({target})\\n")
+            for view in ("json", "table", "mermaid", "all"):
+                result = self.cli("--format", view, str(source))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertNotIn("synthetic/private.md", result.stdout)
+
     def test_file_drive_uri_paths_redacted_in_all_formats(self):
         source = self.write("file-uri.md", "[slash](file:C:/private/fake.md) [backslash](file:C:\\\\private\\\\fake.md)\\n")
         for view in ("json", "table", "mermaid", "all"):
@@ -281,6 +291,25 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual([row[1] for row in rows], ["local.md"])
         explicit = list(reference_audit.extract("[explicit](https://host.test/${ROOT}/x.md) local.md"))
         self.assertEqual([row[1] for row in explicit], ["https://host.test/${ROOT}/x.md", "local.md"])
+
+    def test_percent_encoded_markdown_path_decodes_for_contained_resolution(self):
+        self.write("café.md", "content\n")
+        source = self.write("index.md", "[unicode](caf%C3%A9.md) [escape](%2E%2E/%2E%2E/outside.md)\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = {row["target"]: row for row in json.loads(result.stdout)["records"]}
+        self.assertEqual(rows["caf%C3%A9.md"]["exact_path"], "exact_path")
+        self.assertEqual(rows["%2E%2E/%2E%2E/outside.md"]["exact_path"], "out_of_scope")
+
+    def test_windows_backslash_relative_targets_classify_relative(self):
+        import reference_audit
+        for target in (r"docs\guide.md", r".\guide.md", r"..\README.md"):
+            self.assertEqual(reference_audit.classify_binding(target), "relative", target)
+
+    def test_path_candidate_long_dot_run_scans_bounded(self):
+        import reference_audit
+        rows = list(reference_audit.extract("." * 50000 + "! tail.md"))
+        self.assertLessEqual(len(rows), 1)
 
     def test_supported_absolute_path_families_classify_and_redact(self):
         import reference_audit

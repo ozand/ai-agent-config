@@ -17,10 +17,10 @@ HAS_SECURE_POSIX_OPEN = os.name != "nt" and hasattr(os, "O_NOFOLLOW") and os.ope
 LINK = re.compile(r'!?\[[^\]\n]*+\]\(\s*(<[^>\n]{1,4096}>|[^\s()]{1,4096})(?:\s+["\'][^"\']{0,4096}["\'])?\s*\)')
 URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
-PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
+PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}+")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
 URI_AUTHORITY = re.compile(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#]*")
-ABS = re.compile(r"(?i)file:(?:(?:/{1,3}|\\\\)|[A-Za-z]:[\\/])[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<!/)\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
+ABS = re.compile(r"(?i)file:(?:(?:/{1,3}|\\\\)|[A-Za-z]:[\\/])[^`<>\"']*|file:(?:%2f){1,3}[^`<>\"']*|file:[A-Za-z]%3a(?:%2f|%5c)[^`<>\"']*|file:[A-Za-z]:[^`<>\"']*|file:[A-Za-z]%3a[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<!/)\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
 DYNAMIC = re.compile(r"(?:\$\{[^}]{1,512}\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]{1,512}\}\})(?:[\\/][^\s<>()\]]+)?")
 
 @dataclass(frozen=True)
@@ -89,8 +89,9 @@ def choose_root(path: Path, roots: list[Path], max_depth: int = MAX_DEPTH) -> in
 def classify_binding(target: str) -> str:
     if re.match(r"^[A-Za-z]:[\\/]", target) or target.startswith(("/", "\\")): return "host_absolute"
     if DYNAMIC.fullmatch(target): return "dynamic"
+    if target.startswith((".\\", "..\\")) or ("\\" in target and not target.startswith("\\\\")): return "relative"
     if URI.match(target): return "external"
-    if target.startswith(("./", "../")) or "/" in target: return "relative"
+    if target.startswith(("./", "../", ".\\", "..\\")) or "/" in target or "\\" in target: return "relative"
     return "entity_or_relative"
 
 
@@ -246,24 +247,33 @@ def build_records(files, roots):
                     if not local_target:
                         exact = "unchecked"
                     elif local_target:
-                        local_target = local_target.replace("%20", " ")
-                        unresolved = path.parent / local_target
-                        candidate = unresolved.resolve(strict=False)
-                        containing = [root for root in allowed if within(candidate, root)]
-                        if not containing:
-                            exact = "out_of_scope"
-                        else:
-                            try:
-                                mode = candidate.stat().st_mode
-                            except OSError:
-                                exact = "unchecked"
+                        from urllib.parse import unquote, urlsplit
+                        parsed = urlsplit(local_target)
+                        local_target = unquote(parsed.path, errors="strict")
+                        if Path(local_target).is_absolute() or ".." in Path(local_target).parts or ".." in Path(local_target.replace("\\\\", "/")).parts:
+                            candidate = (path.parent / local_target).resolve(strict=False)
+                            if not any(within(candidate, root) for root in allowed):
+                                exact = "out_of_scope"
+                                local_target = ""
+                        if local_target:
+                            normalized_target = local_target.replace("\\\\", "/")
+                            unresolved = path.parent / normalized_target
+                            candidate = unresolved.resolve(strict=False)
+                            containing = [root for root in allowed if within(candidate, root)]
+                            if not containing:
+                                exact = "out_of_scope"
                             else:
-                                if stat.S_ISREG(mode):
-                                    exact = "exact_path"
-                                elif stat.S_ISDIR(mode):
+                                try:
+                                    mode = candidate.stat().st_mode
+                                except OSError:
                                     exact = "unchecked"
                                 else:
-                                    exact = "not_found_in_scope"
+                                    if stat.S_ISREG(mode):
+                                        exact = "exact_path"
+                                    elif stat.S_ISDIR(mode):
+                                        exact = "unchecked"
+                                    else:
+                                        exact = "not_found_in_scope"
             named = tuple(sorted(names.get(Path(re.split(r"[?#]", target, maxsplit=1)[0]).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
             if kind == "dynamic":
                 named = ()

@@ -15,7 +15,7 @@ MAX_FILE_BYTES = 1_000_000
 MAX_DEPTH = 8
 HAS_SECURE_POSIX_OPEN = os.name != "nt" and hasattr(os, "O_NOFOLLOW") and os.open in os.supports_dir_fd
 MAX_RECORDS = 10000
-LINK = re.compile(r'!?\[[^\]\n]*+\]\(\s*(<[^>\n]{1,4096}>|[^\s()]{1,4096})(?:\s+["\'][^"\']{0,4096}["\'])?\s*\)')
+MAX_LINK_TOKEN = 4096
 URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH_RUN = re.compile(r"(?<![\w/])[\w./-]+")
@@ -100,6 +100,58 @@ def classify_binding(target: str) -> str:
     return "entity_or_relative"
 
 
+def markdown_links(line):
+    links = []
+    i = 0
+    while i < len(line):
+        opener = line.find("[", i)
+        if opener < 0:
+            break
+        label_end = line.find("]", opener + 1)
+        if label_end < 0:
+            break
+        if label_end + 1 >= len(line) or line[label_end + 1] != "(":
+            i = opener + 1
+            continue
+        cursor = label_end + 2
+        while cursor < len(line) and line[cursor].isspace():
+            cursor += 1
+        if cursor < len(line) and line[cursor] == "<":
+            destination_start = cursor + 1
+            destination_end = line.find(">", destination_start, min(len(line), destination_start + MAX_LINK_TOKEN + 1))
+            if destination_end < 0:
+                i = max(opener + 1, min(len(line), destination_start + MAX_LINK_TOKEN))
+                continue
+            close_dest = destination_end + 1
+        else:
+            destination_start = cursor
+            destination_end = cursor
+            while destination_end < len(line) and destination_end - destination_start < MAX_LINK_TOKEN and not line[destination_end].isspace() and line[destination_end] not in ")(<>":
+                destination_end += 1
+            if destination_end == destination_start or (destination_end < len(line) and line[destination_end] in "(<>"):
+                i = max(opener + 1, destination_end)
+                continue
+            close_dest = destination_end
+        cursor = close_dest
+        while cursor < len(line) and line[cursor].isspace():
+            cursor += 1
+        if cursor < len(line) and line[cursor] in "\\\"'":
+            quote = line[cursor]
+            title_end = line.find(quote, cursor + 1, min(len(line), cursor + MAX_LINK_TOKEN + 1))
+            if title_end < 0:
+                i = max(opener + 1, min(len(line), cursor + MAX_LINK_TOKEN))
+                continue
+            cursor = title_end + 1
+            while cursor < len(line) and line[cursor].isspace():
+                cursor += 1
+        if cursor < len(line) and line[cursor] == ")":
+            links.append((line[destination_start:destination_end], (destination_start, destination_end)))
+            i = cursor + 1
+        else:
+            i = max(opener + 1, cursor)
+    return links
+
+
 def extract(text, record_budget=None, max_records=None):
     if max_records is None:
         max_records = MAX_RECORDS
@@ -110,10 +162,10 @@ def extract(text, record_budget=None, max_records=None):
     frontmatter_end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
     for number, line in enumerate(lines, 1):
         found = []
-        for match in LINK.finditer(line):
+        for destination, destination_span in markdown_links(line):
             if record_budget[0] + len(found) >= max_records:
                 raise ValueError("record limit exceeded")
-            found.append((match.group(1).strip("<>"), "markdown_link", match.span(1)))
+            found.append((destination, "markdown_link", destination_span))
         uri_spans = sorted(m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
                      if not re.match(r"(?i)^[A-Z]:[\\/]", m.group(0)))
         def overlaps_uri(match):
@@ -123,15 +175,7 @@ def extract(text, record_budget=None, max_records=None):
             return (i > 0 and uri_spans[i - 1][1] > start) or (i < len(uri_spans) and uri_spans[i][0] < end)
         markdown_spans = sorted(span for _, _, span in found)
         accepted_spans = []
-        class BoundedCandidates(list):
-            def append(self, item):
-                if record_budget[0] + len(self) >= max_records:
-                    raise ValueError("record limit exceeded")
-                super().append(item)
-            def extend(self, items):
-                for item in items:
-                    self.append(item)
-        candidates = BoundedCandidates()
+        candidates = []
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line) if not overlaps_uri(m))
         for match in re.finditer(r"(?i)\bfile:[^\s<>()]+|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])/(?!/)|\\\\)[^\s`<>\"']+", line):
             token_end = match.start()
@@ -182,8 +226,9 @@ def extract(text, record_budget=None, max_records=None):
                 continue
             found.append(candidate)
             accepted_spans.append(span)
+        if record_budget[0] + len(found) > max_records:
+            raise ValueError("record limit exceeded")
         record_budget[0] += len(found)
-        assert record_budget[0] <= max_records
         for target, relation, _ in sorted(found, key=lambda item: item[2]):
             yield number, target, relation, line
 

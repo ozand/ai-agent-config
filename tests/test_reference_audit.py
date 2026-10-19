@@ -147,6 +147,18 @@ class ReferenceAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "record limit exceeded"):
             list(reference_audit.extract("[two](two.md) [three](three.md) [four](four.md)\\n", budget, max_records=3))
 
+    def test_malformed_links_advance_and_keep_neighbor_link(self):
+        import reference_audit
+        line = "[" * 30000 + " [ok](guide.md)"
+        links = reference_audit.markdown_links(line)
+        self.assertEqual([target for target, _ in links], ["guide.md"])
+        self.assertEqual(len(reference_audit.markdown_links("[" * 30000)), 0)
+
+    def test_mixed_markdown_and_fallback_candidates_fail_with_controlled_limit(self):
+        import reference_audit
+        with self.assertRaisesRegex(ValueError, "record limit exceeded"):
+            list(reference_audit.extract("[x](#a) [y](#b) a.a b.b", max_records=3))
+
     def test_angle_bracket_failed_link_scans_are_bounded(self):
         import reference_audit
         self.assertEqual(list(reference_audit.extract("[x](<" * 20000)), [])

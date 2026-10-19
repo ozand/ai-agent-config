@@ -1,6 +1,7 @@
 # ADR-001: Restrict reference audits to explicit read-only input roots
 
-**Status**: Proposed
+**Status**: Accepted
+**Accepted**: 2026-10-18 (Issue #14 owner approval)
 **Date**: 2026-10-18
 **Authors**: Pi assistant
 **Supersedes**: None

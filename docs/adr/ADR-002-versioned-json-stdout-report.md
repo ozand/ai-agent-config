@@ -1,6 +1,7 @@
 # ADR-002: Emit a versioned JSON report with deterministic human projections
 
-**Status**: Proposed
+**Status**: Accepted
+**Accepted**: 2026-10-18 (Issue #14 owner approval)
 **Date**: 2026-10-18
 **Authors**: Pi assistant
 **Supersedes**: None

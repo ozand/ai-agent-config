@@ -7,8 +7,8 @@ Consequences → Alternatives Considered → Test Contract → Rollback → Refe
 
 | ADR | Title | Status |
 |-----|-------|--------|
-| [ADR-001](./ADR-001-bound-input-trust-boundary.md) | Restrict reference audits to explicit read-only input roots | Proposed |
-| [ADR-002](./ADR-002-versioned-json-stdout-report.md) | Emit a versioned JSON report with deterministic human projections | Proposed |
+| [ADR-001](./ADR-001-bound-input-trust-boundary.md) | Restrict reference audits to explicit read-only input roots | Accepted |
+| [ADR-002](./ADR-002-versioned-json-stdout-report.md) | Emit a versioned JSON report with deterministic human projections | Accepted |
 
 ## How to amend
 

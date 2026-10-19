@@ -1,0 +1,7 @@
+# Reference audit CLI
+
+`python scripts/reference_audit.py --root PATH [--root PATH ...] [--format json|table|mermaid|all] FILE...`
+
+Supply every input file explicitly and declare each containing root. The CLI is offline and read-only: it does not execute content, expand environment variables, crawl directories, or follow references. Inputs must be UTF-8 and no larger than 1,000,000 bytes; paths may be at most eight components beneath a declared root. Symlink escapes and files outside roots fail closed. Default format is `all`; JSON is the canonical versioned report and table/Mermaid are projections. Output is stdout only.
+
+Extraction is deliberately conservative and incomplete: Markdown links, selected frontmatter path-like values, and literal path-like text become evidence records. Dynamic targets and ambiguous names remain unresolved. Exact path, entity match, binding, relation, and requirement strength are separate fields; a mention is not proof of installation, activation, permission, or semantic identity. Absolute paths and likely credentials are redacted. Reports must be reviewed before sharing; sanitization is best-effort, not a guarantee against every sensitive value.

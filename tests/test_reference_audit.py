@@ -117,6 +117,18 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual([row[1] for row in records], ["local.md"])
         self.assertEqual(records[0][2], "path_candidate")
 
+    def test_file_drive_uri_paths_redacted_in_all_formats(self):
+        source = self.write("file-uri.md", "[slash](file:C:/private/fake.md) [backslash](file:C:\\\\private\\\\fake.md)\\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("C:/private/fake.md", result.stdout)
+            self.assertNotIn("C:\\\\private", result.stdout)
+
+    def test_angle_bracket_failed_link_scans_are_bounded(self):
+        import reference_audit
+        self.assertEqual(list(reference_audit.extract("[x](<" * 20000)), [])
+
     def test_uri_spans_suppress_all_fallback_collectors_but_keep_explicit_link(self):
         import reference_audit
         line = "file:///private/team/hidden.md https://host.test/${ROOT}/x.md https://host.test/C:/private/x.md https://host.test//share/x.md local.md"
@@ -447,6 +459,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertNotIn("\r", table)
         self.assertEqual(len(table.splitlines()), 3)
         self.assertEqual(table.splitlines()[-1].count("|"), 12)
+        self.assertEqual(reference_audit.table_text("a|b"), "a\\|b")
         self.assertIn("first  second", table)
         self.assertIn("first  second", table)
 

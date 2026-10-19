@@ -13,7 +13,7 @@ from pathlib import Path
 MAX_FILE_BYTES = 1_000_000
 MAX_DEPTH = 8
 HAS_SECURE_POSIX_OPEN = os.name != "nt" and hasattr(os, "O_NOFOLLOW") and os.open in os.supports_dir_fd
-LINK = re.compile(r"!?\[[^\]]*\]\(([^\s()]+)\)")
+LINK = re.compile(r'!?\[[^\]]*\]\(\s*(<[^>]+>|[^\s()]+)(?:\s+["\'][^"\']*["\'])?\s*\)')
 URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
@@ -62,15 +62,12 @@ def extract(text):
     end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
     for number, line in enumerate(lines, 1):
         links = list(LINK.finditer(line))
-        found = [(m.group(1), "markdown_link", m.span(1)) for m in links]
+        found = [(m.group(1).strip("<>") , "markdown_link", m.span(1)) for m in links]
         dynamic_spans = [m.span() for m in re.finditer(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*)(?:/[^\s]+)?", line)]
         if front and 1 < number <= end:
             match = FRONT.match(line)
             if match and ("/" in match.group(1) or "." in match.group(1)):
                 found.append((match.group(1), "frontmatter_candidate", match.span(1)))
-        for match in PATH.finditer(line):
-            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found + [("", "dynamic", span) for span in dynamic_spans]):
-                found.append((match.group(0), "path_candidate", match.span()))
         uri_spans = [m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)]
         for match in PATH.finditer(line):
             if any(match.start() < end and start < match.end() for start, end in uri_spans):
@@ -194,17 +191,16 @@ def build_records(files, roots):
                     elif local_target:
                         local_target = local_target.replace("%20", " ")
                         unresolved = path.parent / local_target
-                        if unresolved.is_symlink():
+                        candidate = unresolved.resolve(strict=False)
+                        containing = [root for root in allowed if within(candidate, root)]
+                        if not containing:
                             exact = "out_of_scope"
+                        elif candidate.is_file():
+                            exact = "exact_path"
+                        elif candidate.is_dir():
+                            exact = "unchecked"
                         else:
-                            candidate = unresolved.resolve(strict=False)
-                            containing = [root for root in allowed if within(candidate, root)]
-                            if containing and candidate.is_file():
-                                exact = "exact_path"
-                            elif containing and candidate.is_dir():
-                                exact = "unchecked"
-                            elif containing:
-                                exact = "not_found_in_scope"
+                            exact = "not_found_in_scope"
             named = tuple(sorted(names.get(Path(re.split(r"[?#]", target, maxsplit=1)[0]).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
             if kind == "dynamic":
                 named = ()

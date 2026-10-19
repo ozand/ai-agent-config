@@ -103,6 +103,42 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertIn("https://example.test/a?q=1", projected.stdout)
             self.assertNotIn("\\\\n", projected.stdout)
 
+    def test_plain_uri_path_is_not_invented_but_neighbor_reference_remains(self):
+        import reference_audit
+        records = list(reference_audit.extract("https://example.com/docs/a.md and see local.md"))
+        self.assertEqual([row[1] for row in records], ["local.md"])
+        self.assertEqual(records[0][2], "path_candidate")
+
+    def test_markdown_optional_quoted_titles_resolve_destination(self):
+        target = self.write("guide.md", "content\n")
+        source = self.write("index.md", '[double](guide.md "A title") and [single](<guide.md> \'A title\')\n')
+        result = self.cli("--format", "json", str(source), str(target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = json.loads(result.stdout)["records"]
+        self.assertEqual([row["target"] for row in rows], ["guide.md", "guide.md"])
+        self.assertEqual([row["exact_path"] for row in rows], ["exact_path", "exact_path"])
+        self.assertEqual([row["relation"] for row in rows], ["markdown_link", "markdown_link"])
+
+    def test_reference_symlink_containment_without_target_read(self):
+        target = self.write("target.md", "TARGET_CONTENT_SENTINEL\n")
+        link = self.allowed / "inside.md"
+        outside = self.base / "outside.md"
+        outside.write_text("OUTSIDE_SENTINEL", encoding="utf-8")
+        try:
+            link.symlink_to(target)
+            escape = self.allowed / "escape.md"
+            escape.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlink creation unsupported")
+        source = self.write("index.md", "[inside](inside.md) [outside](escape.md)\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = json.loads(result.stdout)["records"]
+        self.assertEqual({row["target"]: row["exact_path"] for row in rows},
+                         {"inside.md": "exact_path", "escape.md": "out_of_scope"})
+        self.assertNotIn("TARGET_CONTENT_SENTINEL", result.stdout)
+        self.assertNotIn("OUTSIDE_SENTINEL", result.stdout)
+
     def test_root_input_and_posix_fifo_are_rejected_without_blocking(self):
         import os
         root_as_file = subprocess.run([sys.executable, str(SCRIPT), "--root", str(self.allowed), "--format", "json", str(self.allowed)], text=True, capture_output=True, timeout=3)

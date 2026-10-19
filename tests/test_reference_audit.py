@@ -66,6 +66,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(reference_audit.sanitize("/private/file.md"), "[PATH]")
         self.assertEqual(reference_audit.sanitize("file:///private/team/hidden.md"), "[PATH]")
         self.assertEqual(reference_audit.sanitize("profile:file_value"), "profile:file_value")
+        self.assertEqual(reference_audit.sanitize("profile:settings.md"), "profile:settings.md")
 
     def test_targets_dynamic_fragments_duplicates_and_candidate_ids(self):
         import reference_audit
@@ -155,6 +156,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual([target for target, _ in links], ["guide.md"])
         self.assertEqual(len(reference_audit.markdown_links("[" * 30000)), 0)
         self.assertEqual(len(reference_audit.markdown_links("[" * 30000 + "x]")), 0)
+        self.assertEqual(len(reference_audit.markdown_links("[" * 30000 + "x]" + "(")), 0)
         line = "[" * 30000 + " [ok](guide.md)"
         self.assertEqual([target for target, _ in reference_audit.markdown_links(line)], ["guide.md"])
 
@@ -702,11 +704,12 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(dynamic["exact_path"], "unchecked")
 
     def test_encoded_bearer_credential_is_redacted_in_all_views(self):
-        source = self.write("bearer.md", "Bearer%20synthetic_encoded_bearer_credential_123\n")
+        source = self.write("bearer.md", "Bearer%20synthetic_encoded_bearer_credential_123\nAuthorization%3DBearer%20synthetic_authorization_bearer_credential_123\n")
         for view in ("json", "table", "mermaid", "all"):
             result = self.cli("--format", view, str(source))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotIn("synthetic_encoded_bearer_credential_123", result.stdout)
+            self.assertNotIn("synthetic_authorization_bearer_credential_123", result.stdout)
 
     def test_sensitive_filename_is_not_emitted_in_any_view(self):
         secret_name = "ghp_" + "Q" * 24 + ".md"

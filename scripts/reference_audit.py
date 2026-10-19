@@ -22,7 +22,7 @@ PATH_RUN = re.compile(r"(?<![\w/])[\w./-]+")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
 ENCODED_SECRET = re.compile(r"(?i)(?:api(?:%5f|_)key|access(?:%5f|_)token|refresh(?:%5f|_)token|client(?:%5f|_)secret|password|passwd)(?:%3d|=)[A-Za-z0-9%._/+=-]{12,}")
 URI_AUTHORITY = re.compile(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#]*")
-ABS = re.compile(r"(?i)(?<![\w+.-])file:(?:[^`<>\"']*)|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
+ABS = re.compile(r"(?i)(?<![\w+.-:])file:(?:[^`<>\"']*)|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
 DYNAMIC = re.compile(r"(?:\$\{[^}]{1,512}\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]{1,512}\}\})(?:[\\/][^\s<>()\]]+)?")
 
 @dataclass(frozen=True)
@@ -50,6 +50,7 @@ def sanitize(text: str) -> str:
         return "[REDACTED]" if SECRET.search(decoded) or ENCODED_SECRET.search(decoded) else match.group(0)
     text = re.sub(r"(?i)(?:api|access|client|password|passwd)(?:%[0-9a-f]{2}|[A-Za-z0-9_=-]){1,512}", redact_encoded_secret, text)
     text = re.sub(r"(?i)bearer(?:%20|\s+)[A-Za-z0-9._~+/%=-]{12,}", redact_encoded_secret, text)
+    text = re.sub(r"(?i)authorization(?:%3d|=)bearer(?:%20|\s+)[A-Za-z0-9._~+/%=-]{12,}", redact_encoded_secret, text)
     def redact_authority(match):
         authority = match.group(0)
         scheme, rest = authority.split("://", 1)
@@ -120,6 +121,9 @@ def markdown_links(line):
             i = opening_brackets[next_opener] if next_opener < len(opening_brackets) and opening_brackets[next_opener] < search_limit else search_limit
             continue
         if label_end + 1 >= len(line) or line[label_end + 1] != "(":
+            i = label_end + 1
+            continue
+        if label_end - opener > MAX_LINK_TOKEN:
             i = label_end + 1
             continue
         cursor = label_end + 2

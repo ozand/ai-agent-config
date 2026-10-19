@@ -43,15 +43,11 @@ def sanitize(text: str) -> str:
     text = "".join(char if char in "\\t\\n\\r" or (ord(char) >= 32 and not 0x7f <= ord(char) <= 0x9f) else "�" for char in text)
     text = SECRET.sub("[REDACTED]", text)
     text = ENCODED_SECRET.sub("[REDACTED]", text)
-    decoded_secrets = []
     from urllib.parse import unquote
-    def hold_encoded(match):
+    def redact_encoded_secret(match):
         decoded = unquote(match.group(0))
-        if SECRET.search(decoded) or ENCODED_SECRET.search(decoded):
-            decoded_secrets.append(match.group(0))
-            return "\ue300" + str(len(decoded_secrets) - 1) + "\ue301"
-        return match.group(0)
-    text = re.sub(r"(?i)(?:api|access|client|password|passwd)(?:%[0-9a-f]{2}|[A-Za-z0-9_=-]){1,512}", hold_encoded, text)
+        return "[REDACTED]" if SECRET.search(decoded) or ENCODED_SECRET.search(decoded) else match.group(0)
+    text = re.sub(r"(?i)(?:api|access|client|password|passwd)(?:%[0-9a-f]{2}|[A-Za-z0-9_=-]){1,512}", redact_encoded_secret, text)
     def redact_authority(match):
         authority = match.group(0)
         scheme, rest = authority.split("://", 1)
@@ -72,7 +68,7 @@ def sanitize(text: str) -> str:
             cursor = match.end()
         output.append(ABS.sub("[PATH]", text[cursor:]))
         result = "".join(output)
-    return re.sub(r"\ue300\d+\ue301", "[REDACTED]", result)
+    return result
 
 def normalize_windows_final_path(value: str) -> str:
     if value.startswith("\\\\?\\UNC\\"):
@@ -121,8 +117,12 @@ def extract(text):
         accepted_spans = []
         candidates = []
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line) if not overlaps_uri(m))
-        absolute_matches = list(re.finditer(r"(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])/(?!/)|\\\\)[^`<>\"']*", line))
-        candidates.extend((m.group(0), "path_candidate", m.span()) for m in absolute_matches if not overlaps_uri(m))
+        for match in re.finditer(r"(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])/(?!/)|\\\\)[^\s`<>\"']+", line):
+            end = match.start()
+            while end < len(line) and not line[end].isspace() and line[end] not in "<>\"'`()[]{}":
+                end += 1
+            if end > match.start() and not overlaps_span(match.start(), end):
+                candidates.append((line[match.start():end], "path_candidate", (match.start(), end)))
         candidates.extend((m.group(0), "path_candidate", m.span()) for m in re.finditer(r"(?<![\w:])\\[A-Za-z0-9_.-]+(?:\\[^\s<>\"']+)+", line) if not overlaps_uri(m))
         candidates.extend((m.group(0), "dynamic_candidate", m.span()) for m in DYNAMIC.finditer(line) if not overlaps_uri(m))
         if front and 1 < number <= end:
@@ -146,7 +146,17 @@ def extract(text):
             start, end = run.start(), run.start() + len(prefix) + len(value)
             if not overlaps_span(start, end):
                 candidates.append((prefix + value, "path_candidate", (start, end)))
-        for candidate in sorted(candidates, key=lambda item: (item[2][0], item[2][1], item[1])):
+        candidates.sort(key=lambda item: (item[2][0], item[2][1], item[1]))
+        merged = []
+        for candidate in candidates:
+            if merged and candidate[2][0] < merged[-1][2][1]:
+                previous = merged[-1]
+                if previous[1] == candidate[1] == "path_candidate":
+                    start, stop = previous[2][0], max(previous[2][1], candidate[2][1])
+                    merged[-1] = (line[start:stop], "path_candidate", (start, stop))
+                continue
+            merged.append(candidate)
+        for candidate in merged:
             span = candidate[2]
             i = bisect_left(markdown_spans, (span[0], -1))
             if (i > 0 and markdown_spans[i - 1][1] > span[0]) or (i < len(markdown_spans) and markdown_spans[i][0] < span[1]):
@@ -168,12 +178,12 @@ def public_text(value: str) -> str:
 def public_record(record: Record) -> dict:
     row = asdict(record)
     for key in ("source", "target", "evidence", "search_scope"):
-        row[key] = public_text(str(row[key]))
-    row["candidates"] = [public_text(str(candidate)) for candidate in row["candidates"]]
+        row[key] = public_safe_text(public_text(str(row[key])))
+    row["candidates"] = [public_safe_text(public_text(str(candidate))) for candidate in row["candidates"]]
     return row
 
 def mermaid_text(value: str) -> str:
-    return sanitize(value).replace('"', "'").replace("[", "(").replace("]", ")").replace("\n", " ").replace("\r", " ")
+    return public_safe_text(sanitize(value)).replace('"', "'").replace("[", "(").replace("]", ")").replace("\n", " ").replace("\r", " ")
 
 def build_records(files, roots):
     allowed = [root.resolve(strict=True) for root in roots]
@@ -334,6 +344,10 @@ def make_report(records, source_map=None):
     counts = {field: {value: sum(row[field] == value for row in rows)
         for value in sorted({row[field] for row in rows})} for field in fields}
     return {"schema_version": 1, "sources": dict(sorted((source_map or {}).items())), "records": rows, "counts": counts}
+
+def public_safe_text(value: str) -> str:
+    return "".join(f"\\u{ord(char):04x}" if 0xDC80 <= ord(char) <= 0xDCFF else char for char in value)
+
 
 def table_text(value: str) -> str:
     value = str(value).replace("\r", " ").replace("\n", " ").replace("�", " ")

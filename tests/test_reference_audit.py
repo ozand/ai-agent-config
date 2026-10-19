@@ -210,6 +210,12 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual({row[1] for row in records}, {"local.md"})
         self.assertTrue(all(row[2] == "path_candidate" for row in records))
 
+    def test_same_line_absolute_paths_and_uri_keep_separate_records(self):
+        import reference_audit
+        records = list(reference_audit.extract("/tmp/a.md /var/tmp/b.md https://example.test/x.md /opt/c.md"))
+        self.assertEqual([row[1] for row in records], ["/tmp/a.md", "/var/tmp/b.md", "/opt/c.md"])
+        self.assertTrue(all(row[2] == "path_candidate" for row in records))
+
     def test_each_record_reports_bounded_search_scope(self):
         source = self.write("index.md", "See [guide](guide.md)\n")
         result = self.cli("--format", "json", str(source))

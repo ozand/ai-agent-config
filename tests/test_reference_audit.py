@@ -117,21 +117,35 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual([row[1] for row in records], ["local.md"])
         self.assertEqual(records[0][2], "path_candidate")
 
+    def test_uri_spans_suppress_all_fallback_collectors_but_keep_explicit_link(self):
+        import reference_audit
+        line = "file:///private/team/hidden.md https://host.test/${ROOT}/x.md https://host.test/C:/private/x.md https://host.test//share/x.md local.md"
+        rows = list(reference_audit.extract(line))
+        self.assertEqual([row[1] for row in rows], ["local.md"])
+        for family in ("https://example.test/C:/synthetic/x.md", "https://example.test/${ROOT}/synthetic.md", "file:///private/fake/synthetic.md"):
+            probe = list(reference_audit.extract(f"See {family} and [local](docs/guide.md)"))
+            self.assertEqual([row[1] for row in probe], ["docs/guide.md"], (family, probe))
+        explicit = list(reference_audit.extract("[explicit](https://host.test/${ROOT}/x.md) local.md"))
+        self.assertEqual([row[1] for row in explicit], ["https://host.test/${ROOT}/x.md", "local.md"])
+
     def test_supported_dynamic_family_is_one_complete_record(self):
         import reference_audit
-        forms = ["${ROOT}/one.md", "$ROOT/two.md", "%ROOT%/three.md", "{{ROOT}}/four.md"]
+        forms = ["${ROOT}/one.md", "$ROOT/two.md", "%ROOT%/three.md", "{{ROOT}}/four.md",
+                 "${ROOT}\\\\five.md", "%ROOT%\\\\six.md", "{{ROOT}}\\\\seven.md"]
         for form in forms:
             for line in (form, f"[reference]({form})"):
                 rows = list(reference_audit.extract(line))
                 self.assertEqual(len(rows), 1, (form, line, rows))
                 self.assertEqual(rows[0][1], form)
                 self.assertEqual(reference_audit.classify_binding(rows[0][1]), "dynamic")
-        source = self.write("index.md", "Use " + " and ".join(forms) + "\\n")
+                self.assertEqual(reference_audit.sanitize(form), form)
+        source = self.write("index.md", "Use " + " and ".join(forms) + "\n")
         for view in ("json", "table", "mermaid", "all"):
             result = self.cli("--format", view, str(source))
             self.assertEqual(result.returncode, 0, result.stderr)
             for form in forms:
-                self.assertIn(form, result.stdout)
+                expected = json.dumps(form, ensure_ascii=False)[1:-1] if view == "json" else form
+                self.assertIn(expected, result.stdout)
             self.assertNotIn("[PATH]", result.stdout)
 
     def test_terminal_controls_are_neutralized_in_public_text_and_renderers(self):
@@ -224,6 +238,14 @@ class ReferenceAuditTests(unittest.TestCase):
         rows = {row["target"]: row for row in json.loads(result.stdout)["records"]}
         self.assertEqual(rows["../README.md"]["exact_path"], "exact_path")
         self.assertEqual(rows["../../outside.md"]["exact_path"], "out_of_scope")
+
+    def test_uri_spans_suppress_all_fallback_collectors_but_keep_explicit_link(self):
+        import reference_audit
+        text = "file:///private/team/hidden.md https://host.test/${ROOT}/x.md https://host.test/C:/private/x.md https://host.test//share/x.md local.md"
+        rows = list(reference_audit.extract(text))
+        self.assertEqual([row[1] for row in rows], ["local.md"])
+        explicit = list(reference_audit.extract("[explicit](https://host.test/${ROOT}/x.md) local.md"))
+        self.assertEqual([row[1] for row in explicit], ["https://host.test/${ROOT}/x.md", "local.md"])
 
     def test_supported_absolute_path_families_classify_and_redact(self):
         import reference_audit

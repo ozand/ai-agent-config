@@ -343,11 +343,15 @@ def make_report(records, source_map=None):
     fields = ("exact_path", "entity_match", "binding", "requirement")
     counts = {field: {value: sum(row[field] == value for row in rows)
         for value in sorted({row[field] for row in rows})} for field in fields}
-    safe_sources = {key: public_safe_text(public_text(str(value))) for key, value in (source_map or {}).items()}
+    safe_sources = {key: public_locator(value) for key, value in (source_map or {}).items()}
     return {"schema_version": 1, "sources": dict(sorted(safe_sources.items())), "records": rows, "counts": counts}
 
 def public_safe_text(value: str) -> str:
     return "".join(f"\\u{ord(char):04x}" if 0xDC80 <= ord(char) <= 0xDCFF else char for char in value)
+
+
+def public_locator(value: str) -> str:
+    return sanitize(public_safe_text(str(value)))
 
 
 def table_text(value: str) -> str:

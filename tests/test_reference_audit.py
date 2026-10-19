@@ -568,10 +568,10 @@ class ReferenceAuditTests(unittest.TestCase):
             locators = list(data["sources"].values())
             self.assertEqual(len(locators), 3)
             self.assertEqual(len(set(locators)), 3)
-            self.assertNotIn("\\udcff", result.stdout.lower())
-            self.assertNotIn("\\udcfe", result.stdout.lower())
-            self.assertTrue(any("\\\\udcff" in value for value in locators))
-            self.assertTrue(any("\\\\udcfe" in value for value in locators))
+            self.assertNotIn(chr(0xdcff), result.stdout)
+            self.assertNotIn(chr(0xdcfe), result.stdout)
+            self.assertTrue(any(r"\udcff" in value for value in locators))
+            self.assertTrue(any(r"\udcfe" in value for value in locators))
             self.assertIn("literal_escape.md", locators)
         finally:
             for item in created:

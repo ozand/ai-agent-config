@@ -557,7 +557,7 @@ class ReferenceAuditTests(unittest.TestCase):
                 with os.fdopen(fd, "wb") as handle:
                     handle.write(b"See ./guide.md\\n")
                 created.append(os.fsdecode(full))
-            literal = self.allowed / "literal_escape.md"
+            literal = self.allowed / "~uDCFF~.md"
             literal.write_text("See ./guide.md\\n", encoding="utf-8")
             created.append(literal)
             result = subprocess.run([sys.executable, str(SCRIPT), "--root", str(self.allowed), "--format", "json",
@@ -570,18 +570,16 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertEqual(len(set(locators)), 3)
             self.assertNotIn(chr(0xdcff), result.stdout)
             self.assertNotIn(chr(0xdcfe), result.stdout)
-            self.assertTrue(any(r"\udcff" in value for value in locators))
-            self.assertTrue(any(r"\udcfe" in value for value in locators))
-            self.assertTrue(any("literal_escape.md" == value for value in locators))
-            self.assertTrue(any("~uDCFF~" in value for value in locators))
-            self.assertTrue(any("~~uDCFF~~" in value for value in locators))
-            self.assertIn("literal_escape.md", locators)
+            self.assertIn("invalid_~uDCFF~.md", locators)
+            self.assertIn("invalid_~uDCFE~.md", locators)
+            self.assertIn("~~uDCFF~~.md", locators)
+            self.assertEqual(len(locators), len(set(locators)) )
             table = reference_audit.render_table(data)
-            self.assertIn("~uDCFF~", table)
-            self.assertIn("~~uDCFF~~", table)
+            self.assertIn("invalid_~uDCFF~.md", table)
+            self.assertIn("~~uDCFF~~.md", table)
             graph = reference_audit.render_mermaid(data)
-            self.assertIn("~uDCFF~", graph)
-            self.assertIn("~~uDCFF~~", graph)
+            self.assertIn("invalid_~uDCFF~.md", graph)
+            self.assertIn("~~uDCFF~~.md", graph)
         finally:
             for item in created:
                 try:

@@ -266,7 +266,7 @@ def build_records(files, roots):
                 os.close(root_fd)
         text = raw.decode("utf-8", "strict")
         logical = safe_id(f"root{selected_root}/{relative.as_posix()}")
-        locator = sanitize(relative.as_posix())
+        locator = relative.as_posix()
         inputs.append((real, selected_root, logical, locator, text))
     names = {}
     for path, _, source, _, _ in inputs:
@@ -359,7 +359,15 @@ def public_safe_text(value: str) -> str:
 
 
 def public_locator(value: str) -> str:
-    return public_safe_text(sanitize(str(value)))
+    safe = []
+    for char in str(value):
+        if char == "~":
+            safe.append("~~")
+        elif 0xDC80 <= ord(char) <= 0xDCFF:
+            safe.append(f"~u{ord(char):04X}~")
+        else:
+            safe.append(char)
+    return sanitize("".join(safe))
 
 
 def table_text(value: str) -> str:

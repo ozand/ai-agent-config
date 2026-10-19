@@ -163,13 +163,16 @@ class ReferenceAuditTests(unittest.TestCase):
 
     def test_uri_userinfo_credentials_redacted_all_views(self):
         source = self.write("userinfo.md", "[link](https://synthetic_user:synthetic_pass@example.test/path)\\n")
+        long_password = "p" * 257
+        source.write_text(source.read_text(encoding="utf-8") + f"[long](https://synthetic_user:{long_password}@example.test/long)\\n", encoding="utf-8")
         for view in ("json", "table", "mermaid", "all"):
             result = self.cli("--format", view, str(source))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotIn("synthetic_user", result.stdout)
             self.assertNotIn("synthetic_pass", result.stdout)
+            self.assertNotIn(long_password, result.stdout)
             self.assertIn("example.test/path", result.stdout)
-            self.assertNotIn("synthetic_user:synthetic_pass", result.stdout)
+            self.assertIn("example.test/long", result.stdout)
 
     def test_large_path_candidate_line_has_linear_span_dedup(self):
         import reference_audit

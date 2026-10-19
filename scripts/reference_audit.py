@@ -17,9 +17,9 @@ LINK = re.compile(r'!?\[[^\]]*\]\(\s*(<[^>]+>|[^\s()]+)(?:\s+["\'][^"\']*["\'])?
 URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
-SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+)")
-ABS = re.compile(r"(?i)file:(?:/{1,3}|\\\\)[^\s`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<!/)\/(?!/)|\\\\|\\(?!\\)|//[^/\s]+/)[^\s`<>\"']+")
-DYNAMIC = re.compile(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]+\}\})(?:[\\/][^\s<>()]+)?")
+SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
+ABS = re.compile(r"(?i)file:(?:/{1,3}|\\\\)[^`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<!/)\/(?!/)|\\\\|\\(?!\\)|//[^/\s]+/)[^`<>\"']*")
+DYNAMIC = re.compile(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]+\}\})(?:[\\/][^\s<>()\]]+)?")
 
 @dataclass(frozen=True)
 class Record:
@@ -39,7 +39,7 @@ def sanitize(text: str) -> str:
     text = SECRET.sub("[REDACTED]", text)
     text = re.sub(r"(?<=[)}])/(?!/)", "[SLASH]", text)
     text = DYNAMIC.sub(lambda match: match.group(0).replace("/", "[SLASH]"), text)
-    text = re.sub(r"(?i)file:(?:/{1,3}|\\\\)[^\s`<>\"']*", "[PATH]", text)
+    text = re.sub(r"(?i)file:(?:/{1,3}|\\\\)[^`<>\"']*", "[PATH]", text)
     text = re.sub(r"(?i)(?<=file:)/{1,3}", "[SLASH]", text)
     return ABS.sub("[PATH]", text).replace("[SLASH]", "/")
 
@@ -205,7 +205,7 @@ def build_records(files, roots):
         for line, target, relation, context in extract(text):
             kind = classify_binding(target)
             exact, entity, candidates = "unchecked", "unchecked", ()
-            if kind in {"relative", "entity_or_relative"} and not target.startswith("../") and not URI.match(target):
+            if kind in {"relative", "entity_or_relative"} and not URI.match(target):
                 if relation in {"markdown_link", "frontmatter_candidate"} and kind != "dynamic":
                     local_target = re.split(r"[?#]", target, maxsplit=1)[0]
                     if not local_target:

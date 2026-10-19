@@ -134,6 +134,31 @@ class ReferenceAuditTests(unittest.TestCase):
                 self.assertIn(form, result.stdout)
             self.assertNotIn("[PATH]", result.stdout)
 
+    def test_supported_secret_classes_are_redacted_in_all_formats(self):
+        values = ["api_key=SYNTHETIC_SECRET_123", "access_token=FAKE_TOKEN_456",
+                  "AKIA" + "A" * 16, "AIza" + "B" * 32]
+        source = self.write("secrets.md", "\\n".join(f"[link](https://example.test/path?{value})" for value in values) + "\\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for value in values:
+                self.assertNotIn(value, result.stdout)
+
+    def test_spaced_absolute_and_dot_relative_targets(self):
+        import reference_audit
+        spaced = "/private fake/path.md"
+        self.assertEqual(reference_audit.sanitize(spaced), "[PATH]")
+        self.assertEqual(reference_audit.sanitize("./guide.md"), "./guide.md")
+        self.assertEqual(reference_audit.sanitize("../README.md"), "../README.md")
+        self.write("README.md", "top\n")
+        self.write("docs/index.md", "See [parent](../README.md) and [escape](../../outside.md).\n")
+        source = self.allowed / "docs/index.md"
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = {row["target"]: row for row in json.loads(result.stdout)["records"]}
+        self.assertEqual(rows["../README.md"]["exact_path"], "exact_path")
+        self.assertEqual(rows["../../outside.md"]["exact_path"], "out_of_scope")
+
     def test_supported_absolute_path_families_classify_and_redact(self):
         import reference_audit
         paths = ["/private/posix.md", "//corp-host/share/private.md", "\\\\corp-host\\share\\private.md",

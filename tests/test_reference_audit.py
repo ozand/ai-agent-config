@@ -291,13 +291,31 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(row["entity_match"], "entity_match")
 
     def test_reference_with_nul_does_not_abort_other_records(self):
-        source = self.write("nul.md", "[bad](bad\\x00.md) [valid](valid.md)\n")
+        source = self.write("nul.md", "[bad](bad" + chr(0) + ".md) [valid](valid.md)\n")
         result = self.cli("--format", "json", str(source))
         self.assertEqual(result.returncode, 0, result.stderr)
         records = json.loads(result.stdout)["records"]
         self.assertEqual(len(records), 2)
         self.assertEqual(records[0]["exact_path"], "unchecked")
         self.assertEqual(records[1]["target"], "valid.md")
+
+    def test_missing_reference_is_distinct_from_stat_access_error(self):
+        import errno
+        import reference_audit
+        from unittest import mock
+        source = self.write("status.md", "[missing](missing.md) [denied](denied.md) [valid](valid.md)\n")
+        self.write("valid.md", "target\n")
+        original_stat = Path.stat
+        def patched_stat(path, *args, **kwargs):
+            if path.name == "denied.md":
+                raise PermissionError(errno.EACCES, "synthetic denied")
+            return original_stat(path, *args, **kwargs)
+        with mock.patch.object(Path, "stat", patched_stat):
+            records, _ = reference_audit.build_records([source], [self.allowed])
+        statuses = {record.target: record.exact_path for record in records}
+        self.assertEqual(statuses["missing.md"], "not_found_in_scope")
+        self.assertEqual(statuses["denied.md"], "unchecked")
+        self.assertEqual(statuses["valid.md"], "exact_path")
 
     def test_no_exact_path_lookup_does_not_claim_missing(self):
         source = self.write("candidate.md", "guide.md exists as an entity mention\\n")
@@ -344,6 +362,16 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(list(reference_audit.extract(malformed)), [])
         self.assertEqual(list(reference_audit.extract(dynamic)), [])
         self.assertEqual(reference_audit.sanitize("[x](" + "a" * 100000 + ")"), "[x](" + "a" * 100000 + ")")
+
+    def test_generic_and_id_token_assignments_redacted_all_views(self):
+        values = ["token=synthetic_generic_token_value_123", "id_token=synthetic_id_token_value_123",
+                  "token%3Dsynthetic%5Fencoded%5Ftoken%5Fvalue%5F123", "id%5Ftoken%3Dsynthetic%5Fencoded%5Fid%5Ftoken%5F123"]
+        source = self.write("generic-tokens.md", "\n".join(f"[link](https://example.test/path?{value})" for value in values) + "\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for secret in ("synthetic_generic_token_value_123", "synthetic_id_token_value_123", "synthetic_encoded_token_value_123", "synthetic_encoded_id_token_123"):
+                self.assertNotIn(secret, result.stdout)
 
     def test_percent_encoded_known_secret_assignments_redacted_all_formats(self):
         values = ["api_key=synthetic%5Fsecret%5Fvalue%5F123", "client%5Fsecret=synthetic%5Fsecret%5Fvalue%5F123"]

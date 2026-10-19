@@ -47,11 +47,12 @@ class ReferenceAuditTests(unittest.TestCase):
         import reference_audit
         self.assertEqual(data["schema_version"], 1)
         self.assertEqual(data["records"][0]["exact_path"], "exact_path")
-        self.assertIn("| ID | Source |", a.stdout)
+        self.assertIn("| Source ID | Source path |", a.stdout)
         self.assertIn("```mermaid", a.stdout)
         table = reference_audit.render_table(data)
         self.assertEqual(len(table.splitlines()), 2 + len(data["records"]))
         self.assertTrue(table.splitlines()[1].startswith("|---|"))
+        self.assertEqual(data["sources"][data["records"][0]["source"]], "index.md")
         graph = reference_audit.render_mermaid(data)
         self.assertEqual(len(graph.splitlines()), 1 + len(data["records"]))
         self.assertEqual(sum(data["counts"]["exact_path"].values()), len(data["records"]))
@@ -63,6 +64,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(reference_audit.sanitize("${ROOT}/guide.md"), "${ROOT}/guide.md")
         self.assertEqual(reference_audit.sanitize("C:/private/file.md"), "[PATH]")
         self.assertEqual(reference_audit.sanitize("/private/file.md"), "[PATH]")
+        self.assertEqual(reference_audit.sanitize("file:///private/team/hidden.md"), "[PATH]")
 
     def test_targets_dynamic_fragments_duplicates_and_candidate_ids(self):
         import reference_audit
@@ -76,8 +78,13 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(len(rows), 9)
         self.assertIn("docs/guide.md", [r["target"] for r in rows])
         self.assertIn("https://example.test/a?q=1", [r["target"] for r in rows])
+        self.assertEqual(sum(r["relation"] == "path_candidate" for r in rows), 1)
+        self.assertEqual(next(r for r in rows if r["relation"] == "path_candidate")["target"], "example.md")
         fragment = next(r for r in rows if r["target"] == "docs/guide.md#part?mode=x")
         self.assertEqual(fragment["exact_path"], "exact_path")
+        fragment_only = self.write("fragment.md", "[section](#intro)\n")
+        fragment_result = self.cli("--format", "json", str(fragment_only))
+        self.assertEqual(json.loads(fragment_result.stdout)["records"][0]["exact_path"], "unchecked")
         static = next(r for r in rows if r["target"] == "docs/guide.md" and r["line"] == 3)
         dynamic = next(r for r in rows if r["target"] == "${ROOT}/guide.md")
         self.assertEqual(static["binding"], "relative")
@@ -85,14 +92,51 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(next(r for r in rows if r["line"] == 4)["requirement"], "unknown")
         ambiguous = next(r for r in rows if r["target"] == "guide.md" and r["line"] == 2)
         self.assertEqual(ambiguous["entity_match"], "ambiguous")
+        data = json.loads(result.stdout)
         for candidate in ambiguous["candidates"]:
-            self.assertIn(candidate, [r["source"] for r in rows])
+            self.assertIn(candidate, data["sources"])
+        self.assertEqual({data["sources"][candidate] for candidate in ambiguous["candidates"]}, {"a/guide.md", "b/guide.md"})
         for view in ("table", "mermaid", "all"):
             projected = self.cli("--format", view, str(source), str(target_a), str(target_b))
             self.assertEqual(projected.returncode, 0, projected.stderr)
             self.assertIn("docs/guide.md", projected.stdout)
             self.assertIn("https://example.test/a?q=1", projected.stdout)
             self.assertNotIn("\\\\n", projected.stdout)
+
+    def test_root_input_and_posix_fifo_are_rejected_without_blocking(self):
+        import os
+        root_as_file = subprocess.run([sys.executable, str(SCRIPT), "--root", str(self.allowed), "--format", "json", str(self.allowed)], text=True, capture_output=True, timeout=3)
+        self.assertEqual(root_as_file.returncode, 2)
+        self.assertNotIn("Traceback", root_as_file.stderr)
+        if os.name != "nt" and hasattr(os, "mkfifo"):
+            fifo = self.allowed / "pipe.md"
+            os.mkfifo(fifo)
+            result = subprocess.run([sys.executable, str(SCRIPT), "--root", str(self.allowed), "--format", "json", str(fifo)], text=True, capture_output=True, timeout=3)
+            self.assertEqual(result.returncode, 2)
+            self.assertNotIn("Traceback", result.stderr)
+
+    def test_directory_targets_remain_unchecked(self):
+        import reference_audit
+        self.write("docs/index.md", "index\n")
+        source = self.write("source.md", "[docs](docs/)\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        row = json.loads(result.stdout)["records"][0]
+        self.assertEqual(row["exact_path"], "unchecked")
+
+    def test_uri_schemes_are_external_and_not_path_candidates(self):
+        import reference_audit
+        samples = ["mailto:alice@example.com", "ftp://host/file.md", "HTTPS://host/file.md", "file:///private/team/hidden.md"]
+        for sample in samples:
+            records = list(reference_audit.extract(f"[link]({sample})"))
+            self.assertEqual(len(records), 1)
+            self.assertNotEqual(records[0][2], "path_candidate")
+            self.assertEqual(reference_audit.classify_binding(records[0][1]), "external")
+        source = self.write("uri.md", "[private](file:///private/team/hidden.md)\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("/private/team/hidden.md", result.stdout)
 
     def test_entity_match_does_not_imply_exact_path(self):
         target = self.write("skill.md", "content\n")
@@ -102,6 +146,15 @@ class ReferenceAuditTests(unittest.TestCase):
         row = json.loads(result.stdout)["records"][0]
         self.assertEqual(row["entity_match"], "entity_match")
         self.assertEqual(row["exact_path"], "not_found_in_scope")
+
+    def test_secret_source_locator_is_redacted_but_traceable(self):
+        secret_name = "ghp_" + "Q" * 24 + ".md"
+        source = self.write(secret_name, "See [x](https://example.test)\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = json.loads(result.stdout)
+        self.assertNotIn(secret_name, result.stdout)
+        self.assertIn("[REDACTED].md", data["sources"].values())
 
     def test_root_escape_and_symlink_escape_rejected_without_path_leak(self):
         outside = self.base / "secret-outside.md"
@@ -177,7 +230,7 @@ class ReferenceAuditTests(unittest.TestCase):
         table = reference_audit.render_table(data)
         self.assertNotIn("\r", table)
         self.assertEqual(len(table.splitlines()), 3)
-        self.assertEqual(table.splitlines()[-1].count("|"), 10)
+        self.assertEqual(table.splitlines()[-1].count("|"), 11)
         self.assertIn("first  second", table)
         self.assertIn("first  second", table)
 

@@ -78,6 +78,10 @@ Leaves counts and graph as manually maintained prose, with no deterministic shar
 
 Revert this Proposed ADR if the owner selects human-only output. If accepted and implemented, a later incompatible schema change requires a versioned migration or a superseding ADR; already redirected output cannot be recalled.
 
+## Addendum — implementation clarification (2026-10-19)
+
+The owner accepted option A on 2026-10-18; the Accepted status records that decision and authorizes implementation within Issue #14's bounded scope. The earlier wording “Proposed option A,” “not an accepted schema or implementation authorization,” and rollback phrasing describing this ADR as Proposed were lifecycle text left from the decision draft, not a reversal of the accepted decision. This addendum clarifies lifecycle status without changing the accepted rationale or contract. The report includes an opaque source ID mapped to a sanitized root-relative locator; it never emits the declared root path. Requirement strength remains `unknown` in v1. Implementation and test evidence do not establish extraction completeness or universal sanitization guarantees.
+
 ## References
 
 - ADR-001: bounded read-only input trust boundary

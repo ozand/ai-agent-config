@@ -546,6 +546,7 @@ class ReferenceAuditTests(unittest.TestCase):
 
     def test_posix_surrogateescaped_source_locators_are_safe_and_distinct(self):
         import os
+        import reference_audit
         if os.name == "nt":
             self.skipTest("POSIX surrogateescape filename behavior")
         raw_names = [b"invalid_" + bytes([0xFF]) + b".md", b"invalid_" + bytes([0xFE]) + b".md"]

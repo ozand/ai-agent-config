@@ -65,6 +65,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(reference_audit.sanitize("C:/private/file.md"), "[PATH]")
         self.assertEqual(reference_audit.sanitize("/private/file.md"), "[PATH]")
         self.assertEqual(reference_audit.sanitize("file:///private/team/hidden.md"), "[PATH]")
+        self.assertEqual(reference_audit.sanitize("profile:file_value"), "profile:file_value")
 
     def test_targets_dynamic_fragments_duplicates_and_candidate_ids(self):
         import reference_audit
@@ -153,11 +154,22 @@ class ReferenceAuditTests(unittest.TestCase):
         links = reference_audit.markdown_links(line)
         self.assertEqual([target for target, _ in links], ["guide.md"])
         self.assertEqual(len(reference_audit.markdown_links("[" * 30000)), 0)
+        self.assertEqual(len(reference_audit.markdown_links("[" * 30000 + "x]")), 0)
+        line = "[" * 30000 + " [ok](guide.md)"
+        self.assertEqual([target for target, _ in reference_audit.markdown_links(line)], ["guide.md"])
 
     def test_mixed_markdown_and_fallback_candidates_fail_with_controlled_limit(self):
         import reference_audit
         with self.assertRaisesRegex(ValueError, "record limit exceeded"):
             list(reference_audit.extract("[x](#a) [y](#b) a.a b.b", max_records=3))
+
+    def test_refresh_token_is_redacted_in_all_views(self):
+        source = self.write("refresh.md", "refresh_token=synthetic_refresh_token_value_123\nrefresh%5Ftoken=synthetic%5Frefresh%5Ftoken%5Fvalue%5F123\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("synthetic_refresh_token_value_123", result.stdout)
+            self.assertNotIn("synthetic%5Frefresh%5Ftoken%5Fvalue%5F123", result.stdout)
 
     def test_angle_bracket_failed_link_scans_are_bounded(self):
         import reference_audit
@@ -688,6 +700,13 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(dynamic["entity_match"], "unchecked")
         self.assertEqual(dynamic["target"], "${ROOT}/other.md")
         self.assertEqual(dynamic["exact_path"], "unchecked")
+
+    def test_encoded_bearer_credential_is_redacted_in_all_views(self):
+        source = self.write("bearer.md", "Bearer%20synthetic_encoded_bearer_credential_123\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("synthetic_encoded_bearer_credential_123", result.stdout)
 
     def test_sensitive_filename_is_not_emitted_in_any_view(self):
         secret_name = "ghp_" + "Q" * 24 + ".md"

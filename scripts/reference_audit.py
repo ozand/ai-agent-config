@@ -22,7 +22,7 @@ PATH_RUN = re.compile(r"(?<![\w/])[\w./-]+")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,}|(?:api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passwd)\s*[=:]\s*[\"']?[A-Za-z0-9_./+=-]{12,})")
 ENCODED_SECRET = re.compile(r"(?i)(?:api(?:%5f|_)key|access(?:%5f|_)token|refresh(?:%5f|_)token|client(?:%5f|_)secret|password|passwd)(?:%3d|=)[A-Za-z0-9%._/+=-]{12,}")
 URI_AUTHORITY = re.compile(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#]*")
-ABS = re.compile(r"(?i)file:(?:[^`<>\"']*)|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
+ABS = re.compile(r"(?i)(?<![\w+.-])file:(?:[^`<>\"']*)|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<![.])(?<![)/}])\/(?!/)|\\\\|(?<![.])\\(?![.\\])|//[^/\s]+/)[^`<>\"']*")
 DYNAMIC = re.compile(r"(?:\$\{[^}]{1,512}\}|\$[A-Za-z]\w*|%[A-Za-z]\w*%|\{\{[^}]{1,512}\}\})(?:[\\/][^\s<>()\]]+)?")
 
 @dataclass(frozen=True)
@@ -49,6 +49,7 @@ def sanitize(text: str) -> str:
         decoded = unquote(match.group(0))
         return "[REDACTED]" if SECRET.search(decoded) or ENCODED_SECRET.search(decoded) else match.group(0)
     text = re.sub(r"(?i)(?:api|access|client|password|passwd)(?:%[0-9a-f]{2}|[A-Za-z0-9_=-]){1,512}", redact_encoded_secret, text)
+    text = re.sub(r"(?i)bearer(?:%20|\s+)[A-Za-z0-9._~+/%=-]{12,}", redact_encoded_secret, text)
     def redact_authority(match):
         authority = match.group(0)
         scheme, rest = authority.split("://", 1)
@@ -102,16 +103,24 @@ def classify_binding(target: str) -> str:
 
 def markdown_links(line):
     links = []
+    closing_brackets = [match.start() for match in re.finditer(r"\]", line)]
+    opening_brackets = [match.start() for match in re.finditer(r"\[", line)]
     i = 0
     while i < len(line):
         opener = line.find("[", i)
         if opener < 0:
             break
-        label_end = line.find("]", opener + 1)
-        if label_end < 0:
+        close_index = bisect_left(closing_brackets, opener + 1)
+        if close_index >= len(closing_brackets):
             break
+        label_end = closing_brackets[close_index]
+        search_limit = min(len(line), opener + MAX_LINK_TOKEN + 1)
+        next_opener = bisect_left(opening_brackets, opener + 1)
+        if label_end >= search_limit:
+            i = opening_brackets[next_opener] if next_opener < len(opening_brackets) and opening_brackets[next_opener] < search_limit else search_limit
+            continue
         if label_end + 1 >= len(line) or line[label_end + 1] != "(":
-            i = opener + 1
+            i = label_end + 1
             continue
         cursor = label_end + 2
         while cursor < len(line) and line[cursor].isspace():

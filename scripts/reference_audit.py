@@ -313,7 +313,7 @@ def build_records(files, roots):
                                     elif stat.S_ISDIR(mode):
                                         exact = "unchecked"
                                     else:
-                                        exact = "not_found_in_scope"
+                                        exact = "unchecked"
             named = tuple(sorted(names.get(Path(re.split(r"[?#]", target, maxsplit=1)[0]).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
             if kind == "dynamic":
                 named = ()
@@ -343,14 +343,15 @@ def make_report(records, source_map=None):
     fields = ("exact_path", "entity_match", "binding", "requirement")
     counts = {field: {value: sum(row[field] == value for row in rows)
         for value in sorted({row[field] for row in rows})} for field in fields}
-    return {"schema_version": 1, "sources": dict(sorted((source_map or {}).items())), "records": rows, "counts": counts}
+    safe_sources = {key: public_safe_text(public_text(str(value))) for key, value in (source_map or {}).items()}
+    return {"schema_version": 1, "sources": dict(sorted(safe_sources.items())), "records": rows, "counts": counts}
 
 def public_safe_text(value: str) -> str:
     return "".join(f"\\u{ord(char):04x}" if 0xDC80 <= ord(char) <= 0xDCFF else char for char in value)
 
 
 def table_text(value: str) -> str:
-    value = str(value).replace("\r", " ").replace("\n", " ").replace("�", " ")
+    value = public_safe_text(str(value)).replace("\r", " ").replace("\n", " ").replace("�", " ")
     output = []
     i = 0
     segment = 0

@@ -544,6 +544,42 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertIn("first  second", table)
         self.assertIn("first  second", table)
 
+    def test_posix_surrogateescaped_source_locators_are_safe_and_distinct(self):
+        import os
+        if os.name == "nt":
+            self.skipTest("POSIX surrogateescape filename behavior")
+        raw_names = [b"invalid_\\xff.md", b"invalid_\\xfe.md"]
+        created = []
+        try:
+            for raw_name in raw_names:
+                full = os.fsencode(self.allowed) + b"/" + raw_name
+                fd = os.open(full, os.O_CREAT | os.O_WRONLY, 0o600)
+                with os.fdopen(fd, "wb") as handle:
+                    handle.write(b"See ./guide.md\\n")
+                created.append(os.fsdecode(full))
+            literal = self.allowed / "literal_escape.md"
+            literal.write_text("See ./guide.md\\n", encoding="utf-8")
+            created.append(literal)
+            result = subprocess.run([sys.executable, str(SCRIPT), "--root", str(self.allowed), "--format", "json",
+                                     *created], text=True, capture_output=True, check=False)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            result.stdout.encode("utf-8", "strict")
+            data = json.loads(result.stdout)
+            locators = list(data["sources"].values())
+            self.assertEqual(len(locators), 3)
+            self.assertEqual(len(set(locators)), 3)
+            self.assertNotIn("\\udcff", result.stdout.lower())
+            self.assertNotIn("\\udcfe", result.stdout.lower())
+            self.assertTrue(any("\\\\udcff" in value for value in locators))
+            self.assertTrue(any("\\\\udcfe" in value for value in locators))
+            self.assertIn("literal_escape.md", locators)
+        finally:
+            for item in created:
+                try:
+                    os.unlink(item)
+                except OSError:
+                    pass
+
     def test_size_limit_and_invalid_utf8_fail_closed(self):
         large = self.write("large.md", "x" * 1_000_001)
         self.assertEqual(self.cli("--format", "json", str(large)).returncode, 2)

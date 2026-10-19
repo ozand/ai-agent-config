@@ -12,6 +12,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 MAX_FILE_BYTES = 1_000_000
+MAX_TOTAL_BYTES = 10_000_000
 MAX_DEPTH = 8
 HAS_SECURE_POSIX_OPEN = os.name != "nt" and hasattr(os, "O_NOFOLLOW") and os.open in os.supports_dir_fd
 MAX_RECORDS = 10000
@@ -272,6 +273,7 @@ def build_records(files, roots, max_records=None):
         raise ValueError("duplicate roots")
     inputs = []
     seen_inputs = set()
+    total_bytes = 0
     for path in files:
         real = path.resolve(strict=True)
         if real in seen_inputs:
@@ -310,11 +312,14 @@ def build_records(files, roots, max_records=None):
                     raise ValueError("input is not regular file")
                 if file_stat.st_size > MAX_FILE_BYTES:
                     raise ValueError("input exceeds size limit")
+                remaining = MAX_TOTAL_BYTES - total_bytes
                 with os.fdopen(fd, "rb") as handle_file:
-                    raw = handle_file.read(MAX_FILE_BYTES + 1)
+                    raw = handle_file.read(min(MAX_FILE_BYTES, remaining) + 1)
                     fd = -1
                 if len(raw) > MAX_FILE_BYTES:
                     raise ValueError("input exceeds size limit")
+                if len(raw) > remaining:
+                    raise ValueError("aggregate input size limit exceeded")
             finally:
                 if fd >= 0:
                     os.close(fd)
@@ -336,13 +341,17 @@ def build_records(files, roots, max_records=None):
                         raise ValueError("input is not regular file")
                     if file_stat.st_size > MAX_FILE_BYTES:
                         raise ValueError("input exceeds size limit")
-                    raw = handle.read(MAX_FILE_BYTES + 1)
+                    remaining = MAX_TOTAL_BYTES - total_bytes
+                    raw = handle.read(min(MAX_FILE_BYTES, remaining) + 1)
                     if len(raw) > MAX_FILE_BYTES:
                         raise ValueError("input exceeds size limit")
+                    if len(raw) > remaining:
+                        raise ValueError("aggregate input size limit exceeded")
             finally:
                 for opened_fd in reversed(opened_fds):
                     os.close(opened_fd)
                 os.close(root_fd)
+        total_bytes += len(raw)
         text = raw.decode("utf-8", "strict")
         logical = safe_id(f"root{selected_root}/{relative.as_posix()}")
         locator = relative.as_posix()

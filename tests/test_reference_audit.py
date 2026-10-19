@@ -670,6 +670,18 @@ class ReferenceAuditTests(unittest.TestCase):
                 except OSError:
                     pass
 
+    def test_aggregate_input_size_limit_boundary_and_duplicate_identity(self):
+        import reference_audit
+        from unittest import mock
+        first = self.write("aggregate-a.md", "a" * 6)
+        second = self.write("aggregate-b.md", "b" * 4)
+        with mock.patch.object(reference_audit, "MAX_TOTAL_BYTES", 10):
+            records, _ = reference_audit.build_records([first, second, first], [self.allowed])
+            self.assertEqual(records, [])
+        with mock.patch.object(reference_audit, "MAX_TOTAL_BYTES", 9):
+            with self.assertRaisesRegex(ValueError, "aggregate input size limit exceeded"):
+                reference_audit.build_records([first, second], [self.allowed])
+
     def test_size_limit_and_invalid_utf8_fail_closed(self):
         large = self.write("large.md", "x" * 1_000_001)
         self.assertEqual(self.cli("--format", "json", str(large)).returncode, 2)

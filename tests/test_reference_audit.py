@@ -165,6 +165,14 @@ class ReferenceAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "record limit exceeded"):
             list(reference_audit.extract("[x](#a) [y](#b) a.a b.b", max_records=3))
 
+    def test_aws_session_token_is_redacted_in_all_views(self):
+        source = self.write("aws-token.md", "aws_session_token=synthetic_aws_session_token_123456\naws%5Fsession%5Ftoken%3Dsynthetic%5Faws%5Fsession%5Ftoken%5F123456\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("synthetic_aws_session_token_123456", result.stdout)
+            self.assertNotIn("synthetic%5Faws%5Fsession%5Ftoken%5F123456", result.stdout)
+
     def test_refresh_token_is_redacted_in_all_views(self):
         source = self.write("refresh.md", "refresh_token=synthetic_refresh_token_value_123\nrefresh%5Ftoken=synthetic%5Frefresh%5Ftoken%5Fvalue%5F123\n")
         for view in ("json", "table", "mermaid", "all"):

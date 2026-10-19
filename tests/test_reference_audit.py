@@ -572,6 +572,7 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertNotIn(chr(0xdcfe), result.stdout)
             self.assertTrue(any(r"\udcff" in value for value in locators))
             self.assertTrue(any(r"\udcfe" in value for value in locators))
+            self.assertTrue(any("literal_escape.md" == value for value in locators))
             self.assertIn("literal_escape.md", locators)
         finally:
             for item in created:

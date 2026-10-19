@@ -347,11 +347,19 @@ def make_report(records, source_map=None):
     return {"schema_version": 1, "sources": dict(sorted(safe_sources.items())), "records": rows, "counts": counts}
 
 def public_safe_text(value: str) -> str:
-    return "".join(f"\\u{ord(char):04x}" if 0xDC80 <= ord(char) <= 0xDCFF else char for char in value)
+    output = []
+    for char in value:
+        if char == "~":
+            output.append("~~")
+        elif 0xDC80 <= ord(char) <= 0xDCFF:
+            output.append(f"~u{ord(char):04X}~")
+        else:
+            output.append(char)
+    return "".join(output)
 
 
 def public_locator(value: str) -> str:
-    return sanitize(public_safe_text(str(value)))
+    return public_safe_text(sanitize(str(value)))
 
 
 def table_text(value: str) -> str:

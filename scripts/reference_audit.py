@@ -100,15 +100,18 @@ def classify_binding(target: str) -> str:
     return "entity_or_relative"
 
 
-def extract(text):
+def extract(text, record_budget=None, max_records=None):
+    if max_records is None:
+        max_records = MAX_RECORDS
+    if record_budget is None:
+        record_budget = [0]
     lines = text.splitlines()
     front = len(lines) > 1 and lines[0].strip() == "---"
     end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
-    total_records = 0
     for number, line in enumerate(lines, 1):
         found = []
         for match in LINK.finditer(line):
-            if len(found) + total_records >= MAX_RECORDS:
+            if record_budget[0] + len(found) >= max_records:
                 raise ValueError("record limit exceeded")
             found.append((match.group(1).strip("<>"), "markdown_link", match.span(1)))
         uri_spans = sorted(m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)
@@ -122,7 +125,7 @@ def extract(text):
         accepted_spans = []
         class BoundedCandidates(list):
             def append(self, item):
-                if len(self) >= MAX_RECORDS:
+                if record_budget[0] + len(self) >= max_records:
                     raise ValueError("record limit exceeded")
                 super().append(item)
             def extend(self, items):
@@ -178,10 +181,8 @@ def extract(text):
                 continue
             found.append(candidate)
             accepted_spans.append(span)
-        total_records += len(found)
-        if total_records > MAX_RECORDS:
-            raise ValueError("record limit exceeded")
-        total_records += len(found)
+        record_budget[0] += len(found)
+        assert record_budget[0] <= max_records
         for target, relation, _ in sorted(found, key=lambda item: item[2]):
             yield number, target, relation, line
 
@@ -202,7 +203,9 @@ def public_record(record: Record) -> dict:
 def mermaid_text(value: str) -> str:
     return str(value).replace('"', "'").replace("[", "(").replace("]", ")").replace("\n", " ").replace("\r", " ")
 
-def build_records(files, roots):
+def build_records(files, roots, max_records=None):
+    if max_records is None:
+        max_records = MAX_RECORDS
     allowed = [root.resolve(strict=True) for root in roots]
     if not allowed or any(not root.is_dir() for root in allowed):
         raise ValueError("existing directory root required")
@@ -290,8 +293,9 @@ def build_records(files, roots):
         names.setdefault(path.name.casefold(), []).append(source)
     records = []
     source_map = {source: locator for _, _, source, locator, _ in inputs}
+    record_budget = [0]
     for path, _, source, _, text in inputs:
-        for line, target, relation, context in extract(text):
+        for line, target, relation, context in extract(text, record_budget, max_records):
             kind = classify_binding(target)
             decoded_target = None
             exact, entity, candidates = "unchecked", "unchecked", ()
@@ -310,19 +314,27 @@ def build_records(files, roots):
                             local_target = unquote(parsed.path, errors="strict")
                             decoded_target = local_target
                         except UnicodeDecodeError:
-                            exact = "unchecked"
-                            local_target = ""
-                        if Path(local_target).is_absolute() or ".." in Path(local_target).parts or ".." in Path(local_target.replace("\\\\", "/")).parts:
-                            candidate = (path.parent / local_target).resolve(strict=False)
-                            if not any(within(candidate, root) for root in allowed):
-                                exact = "out_of_scope"
-                                local_target = ""
+                            exact, local_target = "unchecked", ""
+                        if local_target:
+                            try:
+                                if Path(local_target).is_absolute() or ".." in Path(local_target).parts or ".." in Path(local_target.replace("\\\\", "/")).parts:
+                                    candidate = (path.parent / local_target).resolve(strict=False)
+                                    if not any(within(candidate, root) for root in allowed):
+                                        exact = "out_of_scope"
+                                        local_target = ""
+                            except ValueError:
+                                exact, local_target = "unchecked", ""
                         if local_target:
                             normalized_target = local_target.replace("\\\\", "/")
                             unresolved = path.parent / normalized_target
-                            candidate = unresolved.resolve(strict=False)
-                            containing = [root for root in allowed if within(candidate, root)]
-                            if not containing:
+                            try:
+                                candidate = unresolved.resolve(strict=False)
+                            except ValueError:
+                                exact, candidate = "unchecked", None
+                            containing = [root for root in allowed if candidate is not None and within(candidate, root)]
+                            if candidate is None:
+                                exact = "unchecked"
+                            elif not containing:
                                 exact = "out_of_scope"
                             else:
                                 try:
@@ -337,7 +349,11 @@ def build_records(files, roots):
                                     else:
                                         exact = "unchecked"
             lookup_target = decoded_target if relation == "markdown_link" and decoded_target is not None else target
-            named = tuple(sorted(names.get(Path(re.split(r"[?#]", lookup_target, maxsplit=1)[0]).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
+            try:
+                lookup_basename = Path(re.split(r"[?#]", lookup_target, maxsplit=1)[0]).name.casefold()
+            except ValueError:
+                lookup_basename = ""
+            named = tuple(sorted(names.get(lookup_basename, []))) if kind != "dynamic" and exact != "out_of_scope" and "\x00" not in target else ()
             if kind == "dynamic":
                 named = ()
             if len(named) == 1:
@@ -345,7 +361,7 @@ def build_records(files, roots):
             elif len(named) > 1:
                 entity, candidates = "ambiguous", named
             if relation == "path_candidate" and entity == "entity_match":
-                exact = "not_found_in_scope"
+                exact = "unchecked"
             if relation == "dynamic_candidate":
                 kind = "dynamic"
                 exact, entity, candidates = "unchecked", "unchecked", ()

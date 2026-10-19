@@ -135,6 +135,18 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertNotIn("C:/private/fake.md", result.stdout)
             self.assertNotIn("C:\\\\private", result.stdout)
 
+    def test_record_cap_boundary_and_cross_file_aggregate(self):
+        import reference_audit
+        source = self.write("boundary.md", "[a](a.md)\\n[b](b.md)\\n[c](c.md)\\n")
+        records, _ = reference_audit.build_records([source], [self.allowed], max_records=3)
+        self.assertEqual(len(records), 3)
+        with self.assertRaisesRegex(ValueError, "record limit exceeded"):
+            reference_audit.build_records([source], [self.allowed], max_records=2)
+        first = list(reference_audit.extract("[one](one.md)\\n", [0], max_records=3))
+        budget = [len(first)]
+        with self.assertRaisesRegex(ValueError, "record limit exceeded"):
+            list(reference_audit.extract("[two](two.md) [three](three.md) [four](four.md)\\n", budget, max_records=3))
+
     def test_angle_bracket_failed_link_scans_are_bounded(self):
         import reference_audit
         self.assertEqual(list(reference_audit.extract("[x](<" * 20000)), [])
@@ -215,6 +227,33 @@ class ReferenceAuditTests(unittest.TestCase):
         records = list(reference_audit.extract("/tmp/a.md /var/tmp/b.md https://example.test/x.md /opt/c.md"))
         self.assertEqual([row[1] for row in records], ["/tmp/a.md", "/var/tmp/b.md", "/opt/c.md"])
         self.assertTrue(all(row[2] == "path_candidate" for row in records))
+
+    def test_per_file_record_cap_fails_closed_without_partial_output(self):
+        import reference_audit
+        source_a = self.write("cap-a.md", "[a](a.md)\n[b](b.md)\n")
+        source_b = self.write("cap-b.md", "[c](c.md)\n")
+        self.assertEqual(len(reference_audit.build_records([source_a], [self.allowed], max_records=2)[0]), 2)
+        with self.assertRaisesRegex(ValueError, "record limit exceeded"):
+            reference_audit.build_records([source_a, source_b], [self.allowed], max_records=2)
+        import contextlib
+        import io
+        from unittest import mock
+        for view in ("json", "table", "mermaid", "all"):
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with mock.patch.object(reference_audit, "MAX_RECORDS", 2), contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                code = reference_audit.main(["--root", str(self.allowed), "--format", view, str(source_a), str(source_b)])
+            self.assertEqual(code, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("record limit exceeded", stderr.getvalue())
+
+    def test_no_exact_path_lookup_does_not_claim_missing(self):
+        source = self.write("candidate.md", "guide.md exists as an entity mention\\n")
+        self.write("guide.md", "present\\n")
+        result = self.cli("--format", "json", str(source), str(self.allowed / "guide.md"))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        row = next(row for row in json.loads(result.stdout)["records"] if row["relation"] == "path_candidate")
+        self.assertEqual(row["entity_match"], "entity_match")
+        self.assertEqual(row["exact_path"], "unchecked")
 
     def test_each_record_reports_bounded_search_scope(self):
         source = self.write("index.md", "See [guide](guide.md)\n")
@@ -449,7 +488,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         row = json.loads(result.stdout)["records"][0]
         self.assertEqual(row["entity_match"], "entity_match")
-        self.assertEqual(row["exact_path"], "not_found_in_scope")
+        self.assertEqual(row["exact_path"], "unchecked")
 
     def test_secret_source_locator_is_redacted_but_traceable(self):
         secret_name = "ghp_" + "Q" * 24 + ".md"

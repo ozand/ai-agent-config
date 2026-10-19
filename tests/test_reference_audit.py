@@ -247,6 +247,16 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(list(reference_audit.extract(dynamic)), [])
         self.assertEqual(reference_audit.sanitize("[x](" + "a" * 100000 + ")"), "[x](" + "a" * 100000 + ")")
 
+    def test_percent_encoded_known_secret_assignments_redacted_all_formats(self):
+        values = ["api_key=synthetic%5Fsecret%5Fvalue%5F123", "client%5Fsecret=synthetic%5Fsecret%5Fvalue%5F123"]
+        source = self.write("encoded-secrets.md", "\\n".join(f"[link](https://example.test/path?{value})" for value in values) + "\\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for value in values:
+                self.assertNotIn(value, result.stdout)
+            self.assertNotIn("synthetic_secret_value_123", result.stdout)
+
     def test_supported_secret_classes_are_redacted_in_all_formats(self):
         values = ["api_key=SYNTHETIC_SECRET_123", "access_token=FAKE_TOKEN_456",
                   "AKIA" + "A" * 16, "AIza" + "B" * 32]
@@ -519,7 +529,12 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertNotIn("\r", table)
         self.assertEqual(len(table.splitlines()), 3)
         self.assertEqual(table.splitlines()[-1].count("|"), 12)
-        self.assertEqual(reference_audit.table_text("a|b"), "a\\|b")
+        for count in range(4):
+            value = "x" + "\\" * count + "|y"
+            escaped = reference_audit.table_text(value)
+            run = escaped.split("|", 1)[0].split("x", 1)[1]
+            self.assertEqual(len(run) % 2, 1, (count, escaped))
+            self.assertEqual(escaped.count("|"), 1, (count, escaped))
         self.assertIn("first  second", table)
         self.assertIn("first  second", table)
 

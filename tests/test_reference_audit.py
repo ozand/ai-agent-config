@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "reference_audit.py"
+sys.path.insert(0, str(ROOT / "scripts"))
 
 
 class ReferenceAuditTests(unittest.TestCase):
@@ -28,6 +29,10 @@ class ReferenceAuditTests(unittest.TestCase):
         return path
 
     def cli(self, *args: str):
+        import os
+        supported = os.name == "nt" or (hasattr(os, "O_NOFOLLOW") and os.open in os.supports_dir_fd)
+        if not supported and self._testMethodName != "test_platform_without_secure_open_primitives_fails_closed":
+            self.skipTest("secure bounded file opening is unsupported on this platform")
         return subprocess.run([sys.executable, str(SCRIPT), "--root", str(self.allowed), *args],
                               text=True, capture_output=True, check=False)
 
@@ -69,6 +74,46 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertNotIn(str(outside), result.stderr)
 
+    def test_input_symlink_swap_between_validation_and_open_fails_closed(self):
+        import os
+        import reference_audit
+        if os.name == "nt" or not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
+            self.skipTest("POSIX descriptor-relative no-follow open required")
+        source = self.write("input.md", "contents that must be read\n")
+        outside = self.base / "outside.md"
+        outside.write_text("OUTSIDE_SENTINEL", encoding="utf-8")
+        real_open = os.open
+        swapped = False
+        def swapping_open(path, flags, *args, **kwargs):
+            nonlocal swapped
+            if path == "input.md" and kwargs.get("dir_fd") is not None and not swapped:
+                source.unlink()
+                source.symlink_to(outside)
+                swapped = True
+            return real_open(path, flags, *args, **kwargs)
+        from unittest import mock
+        with mock.patch("reference_audit.os.open", side_effect=swapping_open):
+            with self.assertRaises(OSError):
+                reference_audit.build_records([source], [self.allowed])
+        self.assertTrue(swapped)
+        self.assertEqual(outside.read_text(encoding="utf-8"), "OUTSIDE_SENTINEL")
+
+    def test_symlink_reference_outside_root_is_explicitly_unresolved(self):
+        outside = self.base / "outside.md"
+        outside.write_text("OUTSIDE_SENTINEL", encoding="utf-8")
+        target = self.allowed / "escape.md"
+        try:
+            target.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlink creation unsupported")
+        source = self.write("index.md", "See [outside](escape.md)\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        record = json.loads(result.stdout)["records"][0]
+        self.assertEqual(record["exact_path"], "out_of_scope")
+        self.assertEqual(record["entity_match"], "unchecked")
+        self.assertNotIn("OUTSIDE_SENTINEL", result.stdout)
+
     def test_parent_traversal_never_resolves_outside(self):
         outside = self.base / "outside.md"
         outside.write_text("outside-secret", encoding="utf-8")
@@ -96,11 +141,34 @@ class ReferenceAuditTests(unittest.TestCase):
     def test_frontmatter_and_unsupported_dynamic_target(self):
         source = self.write("prompt.md", "---\ninclude: ./guide.md\n---\nUse ${ROOT}/other.md\n")
         self.write("guide.md", "guide\n")
+        self.write("other.md", "target\n")
         result = self.cli("--format", "json", str(source))
         self.assertEqual(result.returncode, 0, result.stderr)
         rows = json.loads(result.stdout)["records"]
         self.assertIn("frontmatter_candidate", [r["relation"] for r in rows])
-        self.assertIn("dynamic", [r["binding"] for r in rows])
+        dynamic = next(r for r in rows if r["binding"] == "dynamic")
+        self.assertEqual(dynamic["entity_match"], "unchecked")
+        self.assertEqual(dynamic["exact_path"], "unchecked")
+
+    def test_sensitive_filename_is_not_emitted_in_any_view(self):
+        secret_name = "sk-" + "Z" * 20 + ".md"
+        target = self.write(secret_name, "target\n")
+        source = self.write("source.md", f"See [{secret_name}]({secret_name})\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source), str(target))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn(secret_name, result.stdout)
+            self.assertNotIn("sk-" + "Z" * 20, result.stdout)
+
+    def test_mermaid_filename_cannot_inject_graph_structure(self):
+        name = "source.md"
+        source = self.write(name, 'See [x](target.md\"]\n  X --> Y\n  Z[\".md)\n')
+        target = self.write("target.md", "target\n")
+        result = self.cli("--format", "mermaid", str(source), str(target))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn('X --> Y', result.stdout)
+        self.assertNotIn('Z["', result.stdout)
+
 
 
 if __name__ == "__main__":

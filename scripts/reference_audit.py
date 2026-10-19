@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Bounded offline inventory for explicitly supplied Markdown inputs."""
 import argparse
+import ctypes
+import hashlib
 import json
+import msvcrt
+import os
 import re
+import stat
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -64,6 +69,12 @@ def extract(text):
             yield number, target, relation, line
 
 
+def safe_id(value: str, prefix: str = "S") -> str:
+    return prefix + hashlib.sha256(value.encode("utf-8", "surrogatepass")).hexdigest()[:12]
+
+def mermaid_text(value: str) -> str:
+    return sanitize(value).replace('"', "'").replace("[", "(").replace("]", ")").replace("\n", " ").replace("\r", " ")
+
 def build_records(files, roots):
     allowed = [root.resolve(strict=True) for root in roots]
     if not allowed or any(not root.is_dir() for root in allowed):
@@ -76,15 +87,65 @@ def build_records(files, roots):
         root_ids = [i for i, root in enumerate(allowed) if within(real, root)]
         if not root_ids:
             raise ValueError("input outside declared roots")
-        if not path.is_file():
-            raise ValueError("input is not regular file")
-        if path.stat().st_size > MAX_FILE_BYTES:
-            raise ValueError("input exceeds size limit")
-        relative = real.relative_to(allowed[root_ids[0]])
+        root = allowed[root_ids[0]]
+        relative = real.relative_to(root)
         if len(relative.parts) > MAX_DEPTH:
             raise ValueError("input exceeds depth limit")
-        text = path.read_bytes().decode("utf-8", "strict")
-        inputs.append((path, f"root{root_ids[0]}/{relative.as_posix()}", text))
+        if os.name == "nt":
+            fd = os.open(real, os.O_RDONLY | getattr(os, "O_BINARY", 0))
+            try:
+                handle = msvcrt.get_osfhandle(fd)
+                get_final = ctypes.windll.kernel32.GetFinalPathNameByHandleW
+                get_final.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32]
+                get_final.restype = ctypes.c_uint32
+                buffer = ctypes.create_unicode_buffer(32768)
+                length = get_final(handle, buffer, len(buffer), 0)
+                if not length or length >= len(buffer):
+                    raise ValueError("cannot verify opened input path")
+                final = Path(buffer.value.removeprefix("\\\\?\\"))
+                if not within(final.resolve(strict=True), root):
+                    raise ValueError("input outside declared roots")
+                file_stat = os.fstat(fd)
+                if not stat.S_ISREG(file_stat.st_mode):
+                    raise ValueError("input is not regular file")
+                if file_stat.st_size > MAX_FILE_BYTES:
+                    raise ValueError("input exceeds size limit")
+                with os.fdopen(fd, "rb") as handle_file:
+                    raw = handle_file.read(MAX_FILE_BYTES + 1)
+                    fd = -1
+                if len(raw) > MAX_FILE_BYTES:
+                    raise ValueError("input exceeds size limit")
+            finally:
+                if fd >= 0:
+                    os.close(fd)
+        else:
+            if not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
+                raise ValueError("secure bounded file opening is unsupported on this platform")
+            flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | os.O_NOFOLLOW
+            root_fd = os.open(root, flags | getattr(os, "O_DIRECTORY", 0))
+            opened_fds = []
+            try:
+                current_fd = root_fd
+                for component in relative.parts[:-1]:
+                    current_fd = os.open(component, flags | getattr(os, "O_DIRECTORY", 0), dir_fd=current_fd)
+                    opened_fds.append(current_fd)
+                fd = os.open(relative.parts[-1], flags, dir_fd=current_fd)
+                with os.fdopen(fd, "rb") as handle:
+                    file_stat = os.fstat(handle.fileno())
+                    if not stat.S_ISREG(file_stat.st_mode):
+                        raise ValueError("input is not regular file")
+                    if file_stat.st_size > MAX_FILE_BYTES:
+                        raise ValueError("input exceeds size limit")
+                    raw = handle.read(MAX_FILE_BYTES + 1)
+                    if len(raw) > MAX_FILE_BYTES:
+                        raise ValueError("input exceeds size limit")
+            finally:
+                for opened_fd in reversed(opened_fds):
+                    os.close(opened_fd)
+                os.close(root_fd)
+        text = raw.decode("utf-8", "strict")
+        logical = safe_id(f"root{root_ids[0]}/{relative.as_posix()}")
+        inputs.append((real, logical, text))
     names = {}
     for path, source, _ in inputs:
         names.setdefault(path.name.casefold(), []).append(source)
@@ -94,20 +155,22 @@ def build_records(files, roots):
             kind = "dynamic" if re.search(r"(?:\$\{|\$[A-Za-z]|%[A-Za-z])", context) else classify_binding(target)
             exact, entity, candidates = "unchecked", "unchecked", ()
             if kind in {"relative", "entity_or_relative"} and not target.startswith("../"):
-                if relation in {"markdown_link", "frontmatter_candidate"}:
-                    candidate = (path.parent / target).resolve(strict=False)
-                    containing = [root for root in allowed if within(candidate, root)]
-                    if containing:
-                        if candidate.is_file():
+                if relation in {"markdown_link", "frontmatter_candidate"} and kind != "dynamic":
+                    unresolved = path.parent / target
+                    if unresolved.is_symlink():
+                        exact = "out_of_scope"
+                    else:
+                        candidate = unresolved.resolve(strict=False)
+                        containing = [root for root in allowed if within(candidate, root)]
+                        if containing and candidate.is_file():
                             exact = "exact_path"
-                            candidates = (candidate.relative_to(containing[0]).as_posix(),)
-                        else:
+                        elif containing:
                             exact = "not_found_in_scope"
-            named = tuple(sorted(names.get(Path(target).name.casefold(), [])))
+            named = tuple(sorted(names.get(Path(target).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
             if len(named) == 1:
                 entity = "entity_match"
             elif len(named) > 1:
-                entity, candidates = "ambiguous", named
+                entity, candidates = "ambiguous", tuple(safe_id(x) for x in named)
             if relation == "path_candidate" and entity == "entity_match":
                 exact = "not_found_in_scope"
             requirement = "mentioned_only" if re.search(r"(?i)example|for instance|e\.g\.", context) else "unknown"
@@ -138,11 +201,11 @@ def render_table(data):
 def render_mermaid(data):
     lines = ["graph LR"]
     for row in data["records"]:
-        source = re.sub(r"[^A-Za-z0-9_]", "_", row["source"])
+        source = safe_id(row["source"])
         target = "T_" + row["id"]
-        label = sanitize(f"{row['relation']}:{row['exact_path']}/{row['entity_match']}").replace('"', "'").replace("[", "(").replace("]", ")")
-        name = sanitize(row["target"]).replace('"', "'").replace("[", "(").replace("]", ")")
-        lines.append(f'  {source}["{row["source"]}"] -->|{label}| {target}["{name}"]')
+        label = mermaid_text(f"{row['relation']}:{row['exact_path']}/{row['entity_match']}")
+        name = mermaid_text(row["target"])
+        lines.append(f'  {source}["Source {source}"] -->|{label}| {target}["{name}"]')
     return "\\n".join(lines)
 
 

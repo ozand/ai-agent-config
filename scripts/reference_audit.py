@@ -18,7 +18,7 @@ URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+)")
-ABS = re.compile(r"(?i)file:(?:/{1,3}|\\\\)[^\s`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<!/)\/(?!/)|\\\\)[^\s`<>\"']+")
+ABS = re.compile(r"(?i)file:(?:/{1,3}|\\\\)[^\s`<>\"']*|(?<![\w:])(?:[A-Za-z]:[\\/]|(?<!/)\/(?!/)|\\\\|//[^/\s]+/)[^\s`<>\"']+")
 
 @dataclass(frozen=True)
 class Record:
@@ -63,13 +63,23 @@ def extract(text):
     for number, line in enumerate(lines, 1):
         links = list(LINK.finditer(line))
         found = [(m.group(1).strip("<>") , "markdown_link", m.span(1)) for m in links]
-        dynamic_spans = [m.span() for m in re.finditer(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*)(?:/[^\s]+)?", line)]
+        network_matches = list(re.finditer(r"(?<![:\w])//[^/\s]+/[^\s<>()]+", line))
+        for match in network_matches:
+            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
+                found.append((match.group(0), "path_candidate", match.span()))
+        dynamic_matches = list(re.finditer(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*)(?:/[^\s]+)?", line))
+        dynamic_spans = [m.span() for m in dynamic_matches]
+        for match in dynamic_matches:
+            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
+                found.append((match.group(0), "dynamic_candidate", match.span()))
         if front and 1 < number <= end:
             match = FRONT.match(line)
             if match and ("/" in match.group(1) or "." in match.group(1)):
                 found.append((match.group(1), "frontmatter_candidate", match.span(1)))
         uri_spans = [m.span() for m in re.finditer(r"(?i)\b[A-Za-z][A-Za-z0-9+.-]*:[^\s<>()]+", line)]
         for match in PATH.finditer(line):
+            if any(match.start() < end and start < match.end() for _, _, span in found for start, end in [span]):
+                continue
             if any(match.start() < end and start < match.end() for start, end in uri_spans):
                 continue
             if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
@@ -110,7 +120,8 @@ def build_records(files, roots):
         root_ids = [i for i, root in enumerate(allowed) if within(real, root)]
         if not root_ids:
             raise ValueError("input outside declared roots")
-        root = allowed[root_ids[0]]
+        selected_root = min(root_ids, key=lambda index: (len(allowed[index].parts), index))
+        root = allowed[selected_root]
         relative = real.relative_to(root)
         if not relative.parts:
             raise ValueError("input must be a file beneath a declared root")
@@ -171,15 +182,15 @@ def build_records(files, roots):
                     os.close(opened_fd)
                 os.close(root_fd)
         text = raw.decode("utf-8", "strict")
-        logical = safe_id(f"root{root_ids[0]}/{relative.as_posix()}")
+        logical = safe_id(f"root{selected_root}/{relative.as_posix()}")
         locator = sanitize(relative.as_posix())
-        inputs.append((real, logical, locator, text))
+        inputs.append((real, selected_root, logical, locator, text))
     names = {}
-    for path, source, _, _ in inputs:
+    for path, _, source, _, _ in inputs:
         names.setdefault(path.name.casefold(), []).append(source)
     records = []
-    source_map = {source: locator for _, source, locator, _ in inputs}
-    for path, source, _, text in inputs:
+    source_map = {source: locator for _, _, source, locator, _ in inputs}
+    for path, _, source, _, text in inputs:
         for line, target, relation, context in extract(text):
             kind = classify_binding(target)
             exact, entity, candidates = "unchecked", "unchecked", ()
@@ -210,16 +221,18 @@ def build_records(files, roots):
                 entity, candidates = "ambiguous", named
             if relation == "path_candidate" and entity == "entity_match":
                 exact = "not_found_in_scope"
-            if relation == "path_candidate" and classify_binding(target) == "host_absolute" and re.search(r"(?:\$\{|\$[A-Za-z]|%[A-Za-z])", context):
+            if relation == "dynamic_candidate":
                 kind = "dynamic"
                 exact, entity, candidates = "unchecked", "unchecked", ()
             requirement = "unknown"
             records.append(Record("", source, line, sanitize(target), relation, requirement,
                 exact, entity, kind, f"line:{line};kind:{relation}", candidates))
     records.sort(key=lambda item: (item.source, item.line, item.target, item.relation))
-    return [Record(f"R{i:04d}", item.source, item.line, item.target, item.relation,
+    rows = [Record(f"R{i:04d}", item.source, item.line, item.target, item.relation,
         item.requirement, item.exact_path, item.entity_match, item.binding, item.evidence, item.candidates)
         for i, item in enumerate(records, 1)]
+    source_map = {source: locator for _, _, source, locator, _ in inputs}
+    return rows, source_map
 
 
 def make_report(records, source_map=None):
@@ -263,10 +276,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         roots = [Path(x).resolve(strict=True) for x in args.root]
-        records = build_records([Path(x) for x in args.files], roots)
-        source_map = {safe_id(f"root{index}/{relative.as_posix()}"): sanitize(relative.as_posix())
-            for index, root in enumerate(roots) for path in dict.fromkeys(Path(x).resolve(strict=True) for x in args.files)
-            if within(path, root) for relative in [path.relative_to(root)]}
+        records, source_map = build_records([Path(x) for x in args.files], roots)
         data = make_report(records, source_map)
         output = []
         if args.format in {"json", "all"}:

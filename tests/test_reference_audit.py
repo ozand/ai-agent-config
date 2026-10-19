@@ -103,11 +103,40 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertIn("https://example.test/a?q=1", projected.stdout)
             self.assertNotIn("\\\\n", projected.stdout)
 
+    def test_unc_host_path_redacted_in_every_output(self):
+        source = self.write("index.md", "See //corp-host/private/file.md\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn("corp-host", result.stdout)
+            self.assertNotIn("private/file.md", result.stdout)
+
     def test_plain_uri_path_is_not_invented_but_neighbor_reference_remains(self):
         import reference_audit
         records = list(reference_audit.extract("https://example.com/docs/a.md and see local.md"))
         self.assertEqual([row[1] for row in records], ["local.md"])
         self.assertEqual(records[0][2], "path_candidate")
+
+    def test_distinct_dynamic_expressions_are_preserved_as_dynamic(self):
+        source = self.write("index.md", "Use ${ROOT}/one.md and ${OTHER}/two.md\n")
+        result = self.cli("--format", "json", str(source))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = json.loads(result.stdout)["records"]
+        self.assertEqual({row["target"] for row in rows}, {"${ROOT}/one.md", "${OTHER}/two.md"})
+        self.assertTrue(all(row["binding"] == "dynamic" and row["exact_path"] == "unchecked" for row in rows))
+
+    def test_overlapping_roots_register_each_source_once(self):
+        import reference_audit
+        nested = self.allowed / "nested"
+        nested.mkdir()
+        source = self.write("nested/index.md", "See [target](target.md)\n")
+        target = self.write("nested/target.md", "target\n")
+        records, sources = reference_audit.build_records([source, target], [self.allowed, nested])
+        expected_sources = {reference_audit.safe_id(f"root0/nested/{source.name}"),
+                            reference_audit.safe_id(f"root0/nested/{target.name}")}
+        self.assertEqual(set(sources), expected_sources)
+        self.assertEqual({row.source for row in records}, {reference_audit.safe_id(f"root0/nested/{source.name}")})
+        self.assertEqual(set(sources.values()), {"nested/index.md", "nested/target.md"})
 
     def test_markdown_optional_quoted_titles_resolve_destination(self):
         target = self.write("guide.md", "content\n")
@@ -294,6 +323,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertIn("frontmatter_candidate", [r["relation"] for r in rows])
         dynamic = next(r for r in rows if r["binding"] == "dynamic")
         self.assertEqual(dynamic["entity_match"], "unchecked")
+        self.assertEqual(dynamic["target"], "${ROOT}/other.md")
         self.assertEqual(dynamic["exact_path"], "unchecked")
 
     def test_sensitive_filename_is_not_emitted_in_any_view(self):

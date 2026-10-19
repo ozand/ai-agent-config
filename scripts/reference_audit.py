@@ -17,7 +17,7 @@ LINK = re.compile(r"!?\[[^\]]*\]\(([^\s()]+)\)")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
 SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+)")
-ABS = re.compile(r"(?:[A-Za-z]:[\/]|/|\\)[^\s`<>\"']+")
+ABS = re.compile(r"(?<![\w:])(?:[A-Za-z]:[\\/]|(?<!/)\/(?!/)|\\\\)[^\s`<>\"']+")
 
 @dataclass(frozen=True)
 class Record:
@@ -34,7 +34,9 @@ class Record:
     candidates: tuple[str, ...]
 
 def sanitize(text: str) -> str:
-    return ABS.sub("[PATH]", SECRET.sub("[REDACTED]", text))
+    text = SECRET.sub("[REDACTED]", text)
+    text = re.sub(r"(?<=[)}])/(?!/)", "[SLASH]", text)
+    return ABS.sub("[PATH]", text).replace("[SLASH]", "/")
 
 def within(path: Path, root: Path) -> bool:
     try:
@@ -44,10 +46,10 @@ def within(path: Path, root: Path) -> bool:
         return False
 
 def classify_binding(target: str) -> str:
-    if target.startswith(("http://", "https://")): return "external"
-    if target.startswith(("${", "$", "%")) or "{{" in target: return "dynamic"
+    if target.startswith(("http://", "https://", "//")): return "external"
+    if re.search(r"(?:\$\{|\$[A-Za-z]|%[A-Za-z])", target) or "{{" in target: return "dynamic"
     if target.startswith(("/", "\\")) or re.match(r"^[A-Za-z]:", target): return "host_absolute"
-    if target.startswith(("./", "../")): return "relative"
+    if target.startswith(("./", "../")) or "/" in target: return "relative"
     return "entity_or_relative"
 
 
@@ -56,15 +58,20 @@ def extract(text):
     front = len(lines) > 1 and lines[0].strip() == "---"
     end = next((i for i in range(1, min(len(lines), 101)) if lines[i].strip() == "---"), 0) if front else 0
     for number, line in enumerate(lines, 1):
-        found = [(m.group(1), "markdown_link") for m in LINK.finditer(line)]
+        links = list(LINK.finditer(line))
+        found = [(m.group(1), "markdown_link", m.span(1)) for m in links]
+        dynamic_spans = [m.span() for m in re.finditer(r"(?:\$\{[^}]+\}|\$[A-Za-z]\w*|%[A-Za-z]\w*)(?:/[^\s]+)?", line)]
         if front and 1 < number <= end:
             match = FRONT.match(line)
             if match and ("/" in match.group(1) or "." in match.group(1)):
-                found.append((match.group(1), "frontmatter_candidate"))
+                found.append((match.group(1), "frontmatter_candidate", match.span(1)))
         for match in PATH.finditer(line):
-            if not any(target == match.group(0) for target, _ in found):
-                found.append((match.group(0), "path_candidate"))
-        for target, relation in found:
+            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found + [("", "dynamic", span) for span in dynamic_spans]):
+                found.append((match.group(0), "path_candidate", match.span()))
+        for match in re.finditer(r"(?<![\w/])/(?:[^\s`<>\"']+)", line):
+            if not any(match.start() < span[1] and span[0] < match.end() for _, _, span in found):
+                found.append((match.group(0), "path_candidate", match.span()))
+        for target, relation, _ in found:
             yield number, target, relation, line
 
 
@@ -78,7 +85,7 @@ def public_record(record: Record) -> dict:
     row = asdict(record)
     for key in ("source", "target", "evidence"):
         row[key] = public_text(str(row[key]))
-    row["candidates"] = [safe_id(str(candidate), "C") for candidate in row["candidates"]]
+    row["candidates"] = [public_text(str(candidate)) for candidate in row["candidates"]]
     return row
 
 def mermaid_text(value: str) -> str:
@@ -91,8 +98,12 @@ def build_records(files, roots):
     if len(set(allowed)) != len(allowed):
         raise ValueError("duplicate roots")
     inputs = []
+    seen_inputs = set()
     for path in files:
         real = path.resolve(strict=True)
+        if real in seen_inputs:
+            continue
+        seen_inputs.add(real)
         root_ids = [i for i, root in enumerate(allowed) if within(real, root)]
         if not root_ids:
             raise ValueError("input outside declared roots")
@@ -163,11 +174,13 @@ def build_records(files, roots):
     records = []
     for path, source, text in inputs:
         for line, target, relation, context in extract(text):
-            kind = "dynamic" if re.search(r"(?:\$\{|\$[A-Za-z]|%[A-Za-z])", context) else classify_binding(target)
+            kind = classify_binding(target)
             exact, entity, candidates = "unchecked", "unchecked", ()
             if kind in {"relative", "entity_or_relative"} and not target.startswith("../"):
                 if relation in {"markdown_link", "frontmatter_candidate"} and kind != "dynamic":
-                    unresolved = path.parent / target
+                    local_target = re.split(r"[?#]", target, maxsplit=1)[0]
+                    local_target = local_target.replace("%20", " ")
+                    unresolved = path.parent / local_target
                     if unresolved.is_symlink():
                         exact = "out_of_scope"
                     else:
@@ -177,14 +190,19 @@ def build_records(files, roots):
                             exact = "exact_path"
                         elif containing:
                             exact = "not_found_in_scope"
-            named = tuple(sorted(names.get(Path(target).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
+            named = tuple(sorted(names.get(Path(re.split(r"[?#]", target, maxsplit=1)[0]).name.casefold(), []))) if kind != "dynamic" and exact != "out_of_scope" else ()
+            if kind == "dynamic":
+                named = ()
             if len(named) == 1:
                 entity = "entity_match"
             elif len(named) > 1:
-                entity, candidates = "ambiguous", tuple(safe_id(x) for x in named)
+                entity, candidates = "ambiguous", named
             if relation == "path_candidate" and entity == "entity_match":
                 exact = "not_found_in_scope"
-            requirement = "mentioned_only" if re.search(r"(?i)example|for instance|e\.g\.", context) else "unknown"
+            if relation == "path_candidate" and classify_binding(target) == "host_absolute" and re.search(r"(?:\$\{|\$[A-Za-z]|%[A-Za-z])", context):
+                kind = "dynamic"
+                exact, entity, candidates = "unchecked", "unchecked", ()
+            requirement = "unknown"
             records.append(Record("", source, line, sanitize(target), relation, requirement,
                 exact, entity, kind, f"line:{line};kind:{relation}", candidates))
     records.sort(key=lambda item: (item.source, item.line, item.target, item.relation))

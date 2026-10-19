@@ -56,6 +56,44 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(len(graph.splitlines()), 1 + len(data["records"]))
         self.assertEqual(sum(data["counts"]["exact_path"].values()), len(data["records"]))
 
+    def test_sanitize_preserves_relative_url_and_dynamic_slashes(self):
+        import reference_audit
+        self.assertEqual(reference_audit.sanitize("docs/guide.md"), "docs/guide.md")
+        self.assertEqual(reference_audit.sanitize("https://example.test/a"), "https://example.test/a")
+        self.assertEqual(reference_audit.sanitize("${ROOT}/guide.md"), "${ROOT}/guide.md")
+        self.assertEqual(reference_audit.sanitize("C:/private/file.md"), "[PATH]")
+        self.assertEqual(reference_audit.sanitize("/private/file.md"), "[PATH]")
+
+    def test_targets_dynamic_fragments_duplicates_and_candidate_ids(self):
+        import reference_audit
+        self.write("docs/guide.md", "guide\n")
+        target_a = self.write("a/guide.md", "[self](guide.md)\n")
+        target_b = self.write("b/guide.md", "[self](guide.md)\n")
+        source = self.write("index.md", "[relative](docs/guide.md) [web](https://example.test/a?q=1)\n[local](docs/guide.md#part?mode=x) [name](guide.md)\n[static](docs/guide.md) and [dynamic](${ROOT}/guide.md)\nexample.md is required\n")
+        result = self.cli("--format", "json", str(source), str(source), str(target_a), str(target_b))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = json.loads(result.stdout)["records"]
+        self.assertEqual(len(rows), 9)
+        self.assertIn("docs/guide.md", [r["target"] for r in rows])
+        self.assertIn("https://example.test/a?q=1", [r["target"] for r in rows])
+        fragment = next(r for r in rows if r["target"] == "docs/guide.md#part?mode=x")
+        self.assertEqual(fragment["exact_path"], "exact_path")
+        static = next(r for r in rows if r["target"] == "docs/guide.md" and r["line"] == 3)
+        dynamic = next(r for r in rows if r["target"] == "${ROOT}/guide.md")
+        self.assertEqual(static["binding"], "relative")
+        self.assertEqual(dynamic["binding"], "dynamic")
+        self.assertEqual(next(r for r in rows if r["line"] == 4)["requirement"], "unknown")
+        ambiguous = next(r for r in rows if r["target"] == "guide.md" and r["line"] == 2)
+        self.assertEqual(ambiguous["entity_match"], "ambiguous")
+        for candidate in ambiguous["candidates"]:
+            self.assertIn(candidate, [r["source"] for r in rows])
+        for view in ("table", "mermaid", "all"):
+            projected = self.cli("--format", view, str(source), str(target_a), str(target_b))
+            self.assertEqual(projected.returncode, 0, projected.stderr)
+            self.assertIn("docs/guide.md", projected.stdout)
+            self.assertIn("https://example.test/a?q=1", projected.stdout)
+            self.assertNotIn("\\\\n", projected.stdout)
+
     def test_entity_match_does_not_imply_exact_path(self):
         target = self.write("skill.md", "content\n")
         source = self.write("index.md", "Use alias skill.md by name.\n")

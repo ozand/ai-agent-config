@@ -77,7 +77,7 @@ class ReferenceAuditTests(unittest.TestCase):
     def test_input_symlink_swap_between_validation_and_open_fails_closed(self):
         import os
         import reference_audit
-        if os.name == "nt" or not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
+        if os.name == "nt" or not hasattr(os, "O_NOFOLLOW") or not reference_audit.HAS_SECURE_POSIX_OPEN:
             self.skipTest("POSIX descriptor-relative no-follow open required")
         source = self.write("input.md", "contents that must be read\n")
         outside = self.base / "outside.md"
@@ -163,7 +163,7 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertEqual(dynamic["exact_path"], "unchecked")
 
     def test_sensitive_filename_is_not_emitted_in_any_view(self):
-        secret_name = "sk-" + "Z" * 20 + ".md"
+        secret_name = "ghp_" + "Q" * 24 + ".md"
         target = self.write(secret_name, "target\n")
         source = self.write("source.md", f"See [{secret_name}]({secret_name})\n")
         for view in ("json", "table", "mermaid", "all"):
@@ -171,6 +171,16 @@ class ReferenceAuditTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotIn(secret_name, result.stdout)
             self.assertNotIn("sk-" + "Z" * 20, result.stdout)
+
+    def test_github_token_filename_is_redacted_across_all_views(self):
+        secret_name = "ghp_" + "Q" * 24 + ".md"
+        source = self.write("source.md", f"[secret]({secret_name})\\n")
+        target = self.write(secret_name, "candidate\\n")
+        for view in ("json", "table", "mermaid", "all"):
+            result = self.cli("--format", view, str(source), str(target))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn(secret_name, result.stdout)
+            self.assertNotIn("ghp_", result.stdout)
 
     def test_mermaid_filename_cannot_inject_graph_structure(self):
         name = "source.md"

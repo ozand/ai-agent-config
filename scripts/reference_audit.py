@@ -12,10 +12,11 @@ from pathlib import Path
 
 MAX_FILE_BYTES = 1_000_000
 MAX_DEPTH = 8
+HAS_SECURE_POSIX_OPEN = os.name != "nt" and hasattr(os, "O_NOFOLLOW") and os.open in os.supports_dir_fd
 LINK = re.compile(r"!?\[[^\]]*\]\(([^\s()]+)\)")
 FRONT = re.compile(r"^\s*[\w.-]+\s*:\s*[\"']?([^\"'\s#]+)")
 PATH = re.compile(r"(?<![\w/])(?:\.{0,2}/)?(?:[\w.-]+/)*[\w.-]+\.[A-Za-z0-9]{1,8}")
-SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+)")
+SECRET = re.compile(r"(?i)(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{16,}|Bearer\s+\S+)")
 ABS = re.compile(r"(?:[A-Za-z]:[\/]|/|\\)[^\s`<>\"']+")
 
 @dataclass(frozen=True)
@@ -70,6 +71,16 @@ def extract(text):
 def safe_id(value: str, prefix: str = "S") -> str:
     return prefix + hashlib.sha256(value.encode("utf-8", "surrogatepass")).hexdigest()[:12]
 
+def public_text(value: str) -> str:
+    return sanitize(value)
+
+def public_record(record: Record) -> dict:
+    row = asdict(record)
+    for key in ("source", "target", "evidence"):
+        row[key] = public_text(str(row[key]))
+    row["candidates"] = [safe_id(str(candidate), "C") for candidate in row["candidates"]]
+    return row
+
 def mermaid_text(value: str) -> str:
     return sanitize(value).replace('"', "'").replace("[", "(").replace("]", ")").replace("\n", " ").replace("\r", " ")
 
@@ -119,7 +130,7 @@ def build_records(files, roots):
                 if fd >= 0:
                     os.close(fd)
         else:
-            if not hasattr(os, "O_NOFOLLOW") or os.open not in os.supports_dir_fd:
+            if not HAS_SECURE_POSIX_OPEN:
                 raise ValueError("secure bounded file opening is unsupported on this platform")
             flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | os.O_NOFOLLOW
             root_fd = os.open(root, flags | getattr(os, "O_DIRECTORY", 0))
@@ -183,7 +194,7 @@ def build_records(files, roots):
 
 
 def make_report(records):
-    rows = [asdict(record) for record in records]
+    rows = [public_record(record) for record in records]
     fields = ("exact_path", "entity_match", "binding", "requirement")
     counts = {field: {value: sum(row[field] == value for row in rows)
         for value in sorted({row[field] for row in rows})} for field in fields}

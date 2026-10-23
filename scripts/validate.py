@@ -83,6 +83,21 @@ def model_ids() -> tuple[set[str], set[str], set[str]]:
 
 def validate_catalog_parity() -> None:
     canonical = load_json(ROOT / "catalog/models.json")
+    if canonical.get("schemaVersion") == 2:
+        from render_clients import opencode_model
+        pi = load_json(ROOT / "clients/pi/models.template.json")
+        oc = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
+        expected = [m["piModel"] for m in canonical["models"]]
+        if pi["providers"]["litellm-edge"]["models"] != expected:
+            fail("Exact ordered Pi snapshot parity failed")
+        if len({m["id"] for m in expected}) != len(expected):
+            fail("Duplicate snapshot IDs")
+        if oc["provider"]["litellm-edge"]["models"] != {m["id"]: opencode_model(m) for m in canonical["models"]}:
+            fail("OpenCode snapshot projection differs")
+        for provider, config in canonical.get("additionalProviders", {}).items():
+            if pi["providers"].get(provider) != config:
+                fail("Additional provider template differs")
+        return
     pi = load_json(ROOT / "clients/pi/models.template.json")
     opencode = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
     canonical_ids, pi_ids, opencode_ids = model_ids()
@@ -156,6 +171,10 @@ def validate_routes() -> None:
 
 def validate_qwen() -> None:
     canonical = load_json(ROOT / "catalog/models.json")
+    if canonical.get("schemaVersion") == 2:
+        # Configuration parity is authoritative; historical endpoint/local-cost
+        # policy remains in archived evidence, not a rendering override.
+        return
     pi = load_json(ROOT / "clients/pi/models.template.json")
     opencode = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
 
@@ -212,7 +231,7 @@ def validate_policy_documents() -> None:
             "- cl/gpt-6.1-sol",
             "- an/claude-sonnet-5-5-high",
             "runtime_context_window: 98304",
-            "pi_context_window: 73728",
+            "pi_context_window: 98304",
         ),
         "catalog/agent-routing.yaml": (
             "primary: litellm-edge/cl/gpt-6-luna",

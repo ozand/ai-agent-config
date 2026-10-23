@@ -1,3 +1,7 @@
+# Current authority supersedes the previous evidence below
+
+Owner explicitly selected the current local model entries as source of truth. Historical endpoint evidence below does not override copied configuration values. Current snapshot includes 49 litellm-edge entries and 1 local entry, exact Pi fields and order. SHA256 of original local source: 122107558b74925ca8562d5b25821e057b70c6f444a8ed1226ecf1f8bc99bf1d. Local provider endpoint is replaced with http://localhost:1234/v1 and a non-secret placeholder; configure locally before use. Zero configured prices are not measured operating cost. No endpoint requests, local writes or runtime operations performed in this correction. OpenCode projects supported fields, while Pi-only metadata remains in canonical piModel and Pi templates.
+
 # Model routing synchronization evidence
 
 Observed at 2026-10-23T01:32:00.999163+00:00 (UTC).

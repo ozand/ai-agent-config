@@ -8,6 +8,7 @@ values and never writes to a live user configuration directory.
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +28,8 @@ def write_json(path: Path, payload: dict) -> None:
 
 
 def pi_model(model: dict) -> dict:
+    if "piModel" in model:
+        return deepcopy(model["piModel"])
     result = {"id": model["id"], "name": model["name"]}
     for source, target in (
         ("reasoning", "reasoning"),
@@ -84,6 +87,21 @@ def pi_model(model: dict) -> dict:
 
 
 def opencode_model(model: dict) -> dict:
+    if "piModel" in model:
+        source = model["piModel"]
+        result = {"name": source.get("name", source["id"])}
+        if "reasoning" in source:
+            result["reasoning"] = source["reasoning"]
+        if "contextWindow" in source and "maxTokens" in source:
+            result["limit"] = {"context": source["contextWindow"], "output": source["maxTokens"]}
+        if "input" in source or "output" in source:
+            result["modalities"] = {k: deepcopy(source[k]) for k in ("input", "output") if k in source}
+        if "cost" in source:
+            names = {"cacheRead": "cache_read", "cacheWrite": "cache_write"}
+            result["cost"] = {names.get(k, k): v for k, v in source["cost"].items()}
+        if source.get("reasoning") and model.get("reasoningVariants"):
+            result["variants"] = {v: {"reasoningEffort": v} for v in model["reasoningVariants"]}
+        return result
     result = {"name": model["name"]}
     if "reasoning" in model:
         result["reasoning"] = model["reasoning"]
@@ -130,7 +148,8 @@ def opencode_model(model: dict) -> dict:
 
 
 def main() -> None:
-    catalog = read_json(CATALOG_PATH)["models"]
+    source_catalog = read_json(CATALOG_PATH)
+    catalog = source_catalog["models"]
     pi = read_json(PI_PATH)
     opencode = read_json(OPENCODE_PATH)
 
@@ -139,6 +158,14 @@ def main() -> None:
         model["id"]: opencode_model(model) for model in catalog
     }
 
+    for provider, config in source_catalog.get("additionalProviders", {}).items():
+        pi["providers"][provider] = deepcopy(config)
+        opencode["provider"][provider] = {
+            "npm": "@ai-sdk/openai-compatible",
+            "name": provider,
+            "options": {"baseURL": config["baseUrl"], "apiKey": "{env:LOCAL_OPENAI_API_KEY}"},
+            "models": {m["id"]: opencode_model({"piModel": m}) for m in config["models"]},
+        }
     write_json(PI_PATH, pi)
     write_json(OPENCODE_PATH, opencode)
     print(f"Rendered {len(catalog)} models into Pi and OpenCode templates")

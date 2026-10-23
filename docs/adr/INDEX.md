@@ -10,6 +10,8 @@ Consequences → Alternatives Considered → Test Contract → Rollback → Refe
 | [ADR-001](./ADR-001-bound-input-trust-boundary.md) | Restrict reference audits to explicit read-only input roots | Accepted |
 | [ADR-002](./ADR-002-versioned-json-stdout-report.md) | Emit a versioned JSON report with deterministic human projections | Accepted |
 
+| [ADR-003](./ADR-003-preserve-owner-local-model-snapshot.md) | Preserve owner-local model entries without curation | Accepted |
+
 ## How to amend
 
 - Edits to a Proposed ADR happen in PRs that reference the ADR number.

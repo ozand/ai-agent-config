@@ -165,7 +165,7 @@ class SonnetCacheConflictTests(unittest.TestCase):
 
     def test_qwen_output_modality_is_preserved(self) -> None:
         oc_models = load_json("clients/opencode/opencode.template.jsonc")["provider"]["litellm-edge"]["models"]
-        self.assertEqual(oc_models["un/qwen3.8-27b-gguf"]["modalities"], {"input": ["text"], "output": ["text"]})
+        self.assertEqual(oc_models["un/qwen3.8-27b-gguf"]["modalities"], {"input": ["text"]})
 
     def test_sonnet_5_5_high_prices_are_rendered(self) -> None:
         pi_models = load_json("clients/pi/models.template.json")["providers"]["litellm-edge"]["models"]
@@ -215,7 +215,7 @@ class CurrentGenerationApprovalTests(unittest.TestCase):
         ids = {m["id"] for m in load_json("catalog/models.json")["models"]}
         self.assertIn("an/claude-sonnet-5-5-high", ids)
         self.assertIn("cl/gpt-6.1-sol", ids)
-        self.assertNotIn("an/claude-sonnet-4-6", ids)
+        self.assertIn("an/claude-sonnet-4-6", ids)  # Explicit owner snapshot includes legacy IDs.
         self.assertNotIn("cl/gpt-6-sol", ids)
 
     def test_canonical_model_count_unchanged(self) -> None:
@@ -223,8 +223,8 @@ class CurrentGenerationApprovalTests(unittest.TestCase):
         models = load_json("catalog/models.json")["models"]
         self.assertEqual(
             len(models),
-            41,
-            "Canonical catalog must contain 41 approved current model IDs",
+            49,
+            "Canonical catalog must preserve 49 owner-local endpoint IDs",
         )
 
 

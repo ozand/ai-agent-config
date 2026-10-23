@@ -1,7 +1,7 @@
 ---
 description: Performs read-only security and secret-safety reviews
 mode: subagent
-model: litellm-edge/an/gemini-3.7-flash-low
+model: litellm-edge/an/gemini-3.8-flash-low
 permission:
   write: deny
   edit: deny

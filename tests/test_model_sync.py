@@ -20,7 +20,10 @@ class ModelSyncTests(unittest.TestCase):
         self.assertEqual(roles['oracle'], {'model': 'litellm-edge/cl/gpt-6.1-sol', 'thinking': 'high'})
 
     def test_active_gemini_policy_matches_catalog(self):
-        for path in [ROOT / 'catalog/model-policy.yaml', ROOT / 'catalog/agent-routing.yaml', ROOT / 'clients/pi/settings.template.json', ROOT / 'clients/opencode/opencode.template.jsonc']:
+        paths = [ROOT / 'catalog/model-policy.yaml', ROOT / 'catalog/agent-routing.yaml', ROOT / 'clients/pi/settings.template.json', ROOT / 'clients/opencode/opencode.template.jsonc', ROOT / 'clients/opencode/dcp.template.jsonc']
+        paths.extend((ROOT / 'clients/opencode/agents').glob('*.md'))
+        paths.extend((ROOT / 'profiles').glob('*.yaml'))
+        for path in paths:
             self.assertNotIn('gemini-3.7', path.read_text(), str(path))
         routing = (ROOT / 'catalog/agent-routing.yaml').read_text().split('opencode:')[0]
         self.assertNotIn('fallbacks:', routing)

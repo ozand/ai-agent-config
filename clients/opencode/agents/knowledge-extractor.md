@@ -1,7 +1,7 @@
 ---
 description: Extracts sanitized reusable knowledge from technical sources
 mode: subagent
-model: litellm-edge/an/gemini-3.7-flash-low
+model: litellm-edge/an/gemini-3.8-flash-low
 permission:
   write: deny
   edit: deny

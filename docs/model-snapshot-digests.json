@@ -1,0 +1,13 @@
+{
+  "sourceSha256": "122107558b74925ca8562d5b25821e057b70c6f444a8ed1226ecf1f8bc99bf1d",
+  "providers": {
+    "litellm-edge": {
+      "count": 49,
+      "sha256": "75dc65a4ea8a83d954d116f9e1b032a41c361a679667b02e3fc4a8f801ccb339"
+    },
+    "local": {
+      "count": 1,
+      "sha256": "7fc28263a5b6cd38d14b6585f6996eef6afad794d407c898dcb578c28b957c38"
+    }
+  }
+}

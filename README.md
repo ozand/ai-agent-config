@@ -112,12 +112,16 @@ Recommended defaults:
 
 See [`docs/litellm-routing-aliases.md`](docs/litellm-routing-aliases.md) for the verified legacy-ID routing contract and its verification limits.
 
-## Important Qwen boundary
+## Owner-local model snapshot
+
+ADR-003 selects the owner's local configuration as authoritative: 49 litellm-edge models plus one local-provider model. Canonical `piModel` objects preserve every Pi field and model order, including Qwen 3.6, legacy GPT routes, OCR and embedding entries. Existing endpoint receipts below are historical observations, not rendering overrides. Configured zero costs are copied values, not measured operating cost. Local-provider address and credentials are safe placeholders requiring local configuration. OpenCode receives supported-field projections; Pi-specific fields remain in the canonical source and Pi template.
+
+## Historical Qwen boundary (superseded for Pi rendering)
 
 `un/qwen3.8-27b-gguf` is text-only.
 
 - runtime/catalog context: 98,304 tokens;
-- conservative Pi consumer context: 73,728 tokens;
+- historical conservative Pi consumer context: 73,728 tokens; current owner snapshot is copied verbatim (98,304);
 - OpenCode leaves `limit` absent while the output limit remains unknown;
 - reasoning levels are qualitative, not exact token budgets.
 

@@ -1,5 +1,6 @@
 schema_version: 1
-policy_name: current-approved
+policy_name: owner-local-snapshot
+model_entry_authority: catalog/models.json piModel (exact local configuration)
 
 provider_priority:
   claude: an
@@ -15,7 +16,10 @@ defaults:
 approved_ordinary_families:
   - an/claude-haiku-4-5-20251001
   - an/claude-opus-4-6
+  - cl/claude-opus-5
+  - an/claude-sonnet-4-6
   - an/claude-sonnet-5-5-high
+  - cl/claude-sonnet-5
   - an/gemini-3.1-pro
   - an/gemini-3.1-pro-high
   - an/gemini-3.1-pro-low
@@ -23,23 +27,26 @@ approved_ordinary_families:
   - an/gemini-3.8-flash-low
   - an/gemini-3.8-flash-medium
   - an/gpt-oss-120b-medium
+  - cl/gpt-5.5
+  - cl/gpt-5.6-luna
+  - cl/gpt-5.6-sol
+  - cl/gpt-5.6-terra
+  - cl/gpt-6-astra
   - cl/gpt-6-luna
   - cl/gpt-6.1-sol
-  - cl/gpt-5.6-terra
-  - un/gpt-oss-20b-GGUF
+  - om/glm-ocr-q8
+  - om/qwen3-embedding-4b
+  - un/qwen3.6-27b-mtp
   - un/qwen3.8-27b-gguf
 
 preserve_image_generation_variants: true
 
 stale_active_patterns:
-  - claude-sonnet-4-6
   - gpt-6-sol
   - gpt-5.3
   - gpt-5.4
-  - gpt-5.5
   - gemini-3.5
   - gemini-3.6
-  - qwen3.6
   - sol1
 
 reasoning_policy:
@@ -72,10 +79,14 @@ qwen38:
   route: un/qwen3.8-27b-gguf
   input: text_only
   runtime_context_window: 98304
-  pi_context_window: 73728
+  pi_context_window: 98304
   opencode_limit: omitted_until_output_limit_is_known
   pi_reasoning_map:
     off: disabled
     low: low
     medium: medium
     high: xhigh
+
+# Configured values (including zero cost) are preserved, not measurements.
+# Legacy metadata_policy cost guidance above is reference-only for schema v2;
+# piModel and sourceSnapshot take precedence for all rendered model fields.

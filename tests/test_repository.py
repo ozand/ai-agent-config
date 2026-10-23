@@ -46,7 +46,7 @@ class RepositoryPolicyTests(unittest.TestCase):
         opencode = set(
             load_json("clients/opencode/opencode.template.jsonc")["provider"]["litellm-edge"]["models"]
         )
-        self.assertEqual(len(canonical), 41)
+        self.assertEqual(len(canonical), 49)
         self.assertEqual(canonical, pi)
         self.assertEqual(canonical, opencode)
 
@@ -84,7 +84,7 @@ class RepositoryPolicyTests(unittest.TestCase):
         )
         opencode = load_json("clients/opencode/opencode.template.jsonc")["provider"]["litellm-edge"]["models"]["un/qwen3.8-27b-gguf"]
         self.assertEqual(canonical["runtimeContextWindow"], 98304)
-        self.assertEqual(pi["contextWindow"], 73728)
+        self.assertEqual(pi["contextWindow"], canonical["piModel"]["contextWindow"])
         self.assertEqual(pi["input"], ["text"])
         self.assertNotIn("limit", opencode)
         self.assertEqual(opencode["modalities"]["input"], ["text"])
@@ -137,9 +137,10 @@ class RepositoryPolicyTests(unittest.TestCase):
         self.assertEqual(hosted["cacheRead"], 0.04)
         self.assertIsNone(hosted["cacheWrite"])
 
-        # Rendered client templates must NOT expose cost (local cost unknown).
-        self.assertNotIn("cost", pi)
-        self.assertNotIn("cost", opencode)
+        # Configuration values are copied, not promoted to measured operating cost.
+        self.assertEqual(pi["cost"], canonical["piModel"]["cost"])
+        self.assertEqual(opencode["cost"]["input"], pi["cost"]["input"])
+        self.assertEqual(opencode["cost"]["output"], pi["cost"]["output"])
 
     def test_all_agent_models_are_provider_qualified(self) -> None:
         pattern = re.compile(r"^litellm-edge/(?:an|cl|un)/")

@@ -13,10 +13,84 @@
       },
       "models": {
         "an/claude-haiku-4-5-20251001": {
-          "name": "Claude Haiku 4.5"
+          "name": "Claude Haiku 4.5",
+          "reasoning": true,
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 1,
+            "output": 5,
+            "cache_read": 0.1,
+            "cache_write": 1.25
+          }
         },
         "an/claude-opus-4-6": {
-          "name": "Claude Opus 4.6"
+          "name": "Claude Opus 4.6",
+          "reasoning": true,
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 5,
+            "output": 25,
+            "cache_read": 0.5,
+            "cache_write": 6.25
+          }
+        },
+        "cl/claude-opus-5": {
+          "name": "Claude Opus 5",
+          "reasoning": true,
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 5,
+            "output": 25,
+            "cache_read": 0.5,
+            "cache_write": 6.25
+          }
+        },
+        "an/claude-sonnet-4-6": {
+          "name": "Claude Sonnet 4.6",
+          "reasoning": true,
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 3,
+            "output": 15,
+            "cache_read": 0.3,
+            "cache_write": 3.75
+          }
         },
         "an/claude-sonnet-5-5-high": {
           "name": "Claude Sonnet 5.5 High",
@@ -29,120 +103,340 @@
             "input": [
               "text",
               "image"
-            ],
-            "output": [
-              "text"
             ]
           },
           "cost": {
-            "input": 2.0,
-            "output": 10.0,
+            "input": 2,
+            "output": 10,
             "cache_read": 0.2,
             "cache_write": 2.5
           }
         },
+        "cl/claude-sonnet-5": {
+          "name": "Claude Sonnet 5",
+          "reasoning": true,
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 3,
+            "output": 15,
+            "cache_read": 0.3,
+            "cache_write": 3.75
+          }
+        },
         "an/gemini-3-pro-image": {
-          "name": "Gemini 3 Pro Image"
+          "name": "an/gemini-3-pro-image"
         },
         "an/gemini-3-pro-image-16x9": {
-          "name": "Gemini 3 Pro Image 16x9"
+          "name": "an/gemini-3-pro-image-16x9"
         },
         "an/gemini-3-pro-image-1x1": {
-          "name": "Gemini 3 Pro Image 1x1"
+          "name": "an/gemini-3-pro-image-1x1"
         },
         "an/gemini-3-pro-image-21x9": {
-          "name": "Gemini 3 Pro Image 21x9"
+          "name": "an/gemini-3-pro-image-21x9"
         },
         "an/gemini-3-pro-image-2k": {
-          "name": "Gemini 3 Pro Image 2K"
+          "name": "an/gemini-3-pro-image-2k"
         },
         "an/gemini-3-pro-image-2k-16x9": {
-          "name": "Gemini 3 Pro Image 2K 16x9"
+          "name": "an/gemini-3-pro-image-2k-16x9"
         },
         "an/gemini-3-pro-image-2k-1x1": {
-          "name": "Gemini 3 Pro Image 2K 1x1"
+          "name": "an/gemini-3-pro-image-2k-1x1"
         },
         "an/gemini-3-pro-image-2k-21x9": {
-          "name": "Gemini 3 Pro Image 2K 21x9"
+          "name": "an/gemini-3-pro-image-2k-21x9"
         },
         "an/gemini-3-pro-image-2k-3x4": {
-          "name": "Gemini 3 Pro Image 2K 3x4"
+          "name": "an/gemini-3-pro-image-2k-3x4"
         },
         "an/gemini-3-pro-image-2k-4x3": {
-          "name": "Gemini 3 Pro Image 2K 4x3"
+          "name": "an/gemini-3-pro-image-2k-4x3"
         },
         "an/gemini-3-pro-image-2k-9x16": {
-          "name": "Gemini 3 Pro Image 2K 9x16"
+          "name": "an/gemini-3-pro-image-2k-9x16"
         },
         "an/gemini-3-pro-image-3x4": {
-          "name": "Gemini 3 Pro Image 3x4"
+          "name": "an/gemini-3-pro-image-3x4"
         },
         "an/gemini-3-pro-image-4k": {
-          "name": "Gemini 3 Pro Image 4K"
+          "name": "an/gemini-3-pro-image-4k"
         },
         "an/gemini-3-pro-image-4k-16x9": {
-          "name": "Gemini 3 Pro Image 4K 16x9"
+          "name": "an/gemini-3-pro-image-4k-16x9"
         },
         "an/gemini-3-pro-image-4k-1x1": {
-          "name": "Gemini 3 Pro Image 4K 1x1"
+          "name": "an/gemini-3-pro-image-4k-1x1"
         },
         "an/gemini-3-pro-image-4k-21x9": {
-          "name": "Gemini 3 Pro Image 4K 21x9"
+          "name": "an/gemini-3-pro-image-4k-21x9"
         },
         "an/gemini-3-pro-image-4k-3x4": {
-          "name": "Gemini 3 Pro Image 4K 3x4"
+          "name": "an/gemini-3-pro-image-4k-3x4"
         },
         "an/gemini-3-pro-image-4k-4x3": {
-          "name": "Gemini 3 Pro Image 4K 4x3"
+          "name": "an/gemini-3-pro-image-4k-4x3"
         },
         "an/gemini-3-pro-image-4k-9x16": {
-          "name": "Gemini 3 Pro Image 4K 9x16"
+          "name": "an/gemini-3-pro-image-4k-9x16"
         },
         "an/gemini-3-pro-image-4x3": {
-          "name": "Gemini 3 Pro Image 4x3"
+          "name": "an/gemini-3-pro-image-4x3"
         },
         "an/gemini-3-pro-image-9x16": {
-          "name": "Gemini 3 Pro Image 9x16"
+          "name": "an/gemini-3-pro-image-9x16"
         },
         "an/gemini-3.1-flash-image": {
-          "name": "Gemini 3.1 Flash Image"
+          "name": "an/gemini-3.1-flash-image"
         },
         "an/gemini-3.1-pro": {
-          "name": "Gemini 3.1 Pro"
+          "name": "Gemini 3.1 Pro",
+          "reasoning": true,
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 2,
+            "output": 12,
+            "cache_read": 0,
+            "cache_write": 0
+          }
         },
         "an/gemini-3.1-pro-high": {
-          "name": "Gemini 3.1 Pro High",
-          "reasoning": true
+          "name": "Gemini 3.1 Pro — high tier",
+          "reasoning": true,
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 2,
+            "output": 12,
+            "cache_read": 0,
+            "cache_write": 0
+          }
         },
         "an/gemini-3.1-pro-low": {
-          "name": "Gemini 3.1 Pro Low",
+          "name": "Gemini 3.1 Pro — low tier",
           "reasoning": true,
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
           "cost": {
-            "input": 2.0,
-            "output": 12.0
+            "input": 2,
+            "output": 12,
+            "cache_read": 0,
+            "cache_write": 0
           }
         },
         "an/gemini-3.8-flash-high": {
-          "name": "Gemini 3.8 Flash High",
-          "reasoning": true
-        },
-        "an/gemini-3.8-flash-low": {
-          "name": "Gemini 3.8 Flash Low",
+          "name": "Gemini 3.8 Flash — high tier",
           "reasoning": true,
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
           "cost": {
             "input": 0.75,
-            "output": 3.75
+            "output": 3.75,
+            "cache_read": 0,
+            "cache_write": 0
+          }
+        },
+        "an/gemini-3.8-flash-low": {
+          "name": "Gemini 3.8 Flash — low tier",
+          "reasoning": true,
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 0.75,
+            "output": 3.75,
+            "cache_read": 0,
+            "cache_write": 0
           }
         },
         "an/gemini-3.8-flash-medium": {
-          "name": "Gemini 3.8 Flash Medium",
-          "reasoning": true
+          "name": "Gemini 3.8 Flash — medium tier",
+          "reasoning": true,
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 0.75,
+            "output": 3.75,
+            "cache_read": 0,
+            "cache_write": 0
+          }
         },
         "an/gpt-oss-120b-medium": {
           "name": "GPT-OSS 120B Medium"
         },
         "cl/gemini-3.1-flash-image": {
-          "name": "Gemini 3.1 Flash Image"
+          "name": "cl/gemini-3.1-flash-image"
+        },
+        "cl/gpt-5.5": {
+          "name": "GPT-5.5",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 5,
+            "output": 30,
+            "cache_read": 0.5,
+            "cache_write": 6.25
+          }
+        },
+        "cl/gpt-5.6-luna": {
+          "name": "GPT-5.6 Luna",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 0.2,
+            "output": 1.2,
+            "cache_read": 0.02,
+            "cache_write": 0.25
+          }
+        },
+        "cl/gpt-5.6-sol": {
+          "name": "GPT-5.6 Sol",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 5,
+            "output": 30,
+            "cache_read": 0.5,
+            "cache_write": 6.25
+          }
+        },
+        "cl/gpt-5.6-terra": {
+          "name": "GPT-5.6 Terra",
+          "reasoning": true,
+          "limit": {
+            "context": 1050000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 2,
+            "output": 12,
+            "cache_read": 0.2,
+            "cache_write": 2.5
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low"
+            },
+            "medium": {
+              "reasoningEffort": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh"
+            }
+          }
+        },
+        "cl/gpt-6-astra": {
+          "name": "GPT-6 Astra",
+          "reasoning": true,
+          "limit": {
+            "context": 922000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 10,
+            "output": 50,
+            "cache_read": 1,
+            "cache_write": 12.5
+          }
         },
         "cl/gpt-6-luna": {
           "name": "GPT-6 Luna",
@@ -155,14 +449,11 @@
             "input": [
               "text",
               "image"
-            ],
-            "output": [
-              "text"
             ]
           },
           "cost": {
-            "input": 2.0,
-            "output": 12.0,
+            "input": 2,
+            "output": 12,
             "cache_read": 0.01,
             "cache_write": 0.125
           },
@@ -192,14 +483,11 @@
             "input": [
               "text",
               "image"
-            ],
-            "output": [
-              "text"
             ]
           },
           "cost": {
-            "input": 2.0,
-            "output": 10.0,
+            "input": 2,
+            "output": 10,
             "cache_read": 0.1,
             "cache_write": 2.5
           },
@@ -218,74 +506,59 @@
             }
           }
         },
-        "cl/gpt-5.6-terra": {
-          "name": "GPT-5.6 Terra",
-          "reasoning": true,
-          "limit": {
-            "context": 922000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "cost": {
-            "input": 2.0,
-            "output": 12.0,
-            "cache_read": 0.2,
-            "cache_write": 2.5
-          },
-          "variants": {
-            "low": {
-              "reasoningEffort": "low"
-            },
-            "medium": {
-              "reasoningEffort": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high"
-            },
-            "xhigh": {
-              "reasoningEffort": "xhigh"
-            }
-          }
-        },
-        "cl/gpt-6-astra": {
-          "name": "GPT-6 Astra",
-          "reasoning": true,
-          "limit": {
-            "context": 1050000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "cost": {
-            "input": 10.0,
-            "output": 50.0,
-            "cache_read": 1.0,
-            "cache_write": 12.5
-          }
-        },
         "cl/gpt-image-1.5": {
-          "name": "GPT Image 1.5"
+          "name": "cl/gpt-image-1.5"
         },
         "cl/gpt-image-2": {
-          "name": "GPT Image 2"
+          "name": "cl/gpt-image-2"
         },
-        "un/gpt-oss-20b-GGUF": {
-          "name": "GPT-OSS 20B GGUF"
+        "om/glm-ocr-q8": {
+          "name": "GLM OCR Q8",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ]
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          }
+        },
+        "om/qwen3-embedding-4b": {
+          "name": "Qwen3 Embedding 4B",
+          "modalities": {
+            "input": [
+              "text"
+            ]
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          }
+        },
+        "un/qwen3.6-27b-mtp": {
+          "name": "Qwen3.6 27B MTP",
+          "reasoning": true,
+          "modalities": {
+            "input": [
+              "text"
+            ]
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          }
         },
         "un/qwen3.8-27b-gguf": {
           "name": "Qwen3.8 27B GGUF",
@@ -293,10 +566,38 @@
           "modalities": {
             "input": [
               "text"
-            ],
-            "output": [
+            ]
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0
+          }
+        }
+      }
+    },
+    "local": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "local",
+      "options": {
+        "baseURL": "http://localhost:1234/v1",
+        "apiKey": "{env:LOCAL_OPENAI_API_KEY}"
+      },
+      "models": {
+        "un/qwen3.8-27b-gguf": {
+          "name": "Qwen3.8 27B GGUF",
+          "reasoning": true,
+          "modalities": {
+            "input": [
               "text"
             ]
+          },
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cache_read": 0,
+            "cache_write": 0
           }
         }
       }

@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "model": "litellm-edge/cl/gpt-6-luna",
-  "small_model": "litellm-edge/an/gemini-3.7-flash-low",
+  "small_model": "litellm-edge/an/gemini-3.8-flash-low",
   "default_agent": "orchestrator",
   "provider": {
     "litellm-edge": {
@@ -368,7 +368,7 @@
     "fast-check": {
       "description": "Fast low-cost primary agent for quick checks, short edits, and lightweight verification.",
       "mode": "primary",
-      "model": "litellm-edge/an/gemini-3.7-flash-low",
+      "model": "litellm-edge/an/gemini-3.8-flash-low",
       "permission": {
         "task": {
           "*": "deny",
@@ -383,13 +383,13 @@
       "options": {}
     },
     "general": {
-      "model": "litellm-edge/an/gemini-3.7-flash-low",
+      "model": "litellm-edge/an/gemini-3.8-flash-low",
       "steps": 120,
       "options": {},
       "permission": {}
     },
     "explore": {
-      "model": "litellm-edge/an/gemini-3.7-flash-low",
+      "model": "litellm-edge/an/gemini-3.8-flash-low",
       "steps": 90,
       "options": {},
       "permission": {}

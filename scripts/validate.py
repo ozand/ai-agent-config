@@ -125,8 +125,8 @@ def validate_defaults() -> None:
         fail("Pi default model must be cl/gpt-6-luna")
     if opencode["model"] != "litellm-edge/cl/gpt-6-luna":
         fail("OpenCode default model must be provider-qualified Luna")
-    if opencode["small_model"] != "litellm-edge/an/gemini-3.7-flash-low":
-        fail("OpenCode small model must be Gemini 3.7 Flash Low")
+    if opencode["small_model"] != "litellm-edge/an/gemini-3.8-flash-low":
+        fail("OpenCode small model must be Gemini 3.8 Flash Low")
 
 
 def validate_routes() -> None:
@@ -208,21 +208,21 @@ def validate_policy_documents() -> None:
     required_markers = {
         "catalog/model-policy.yaml": (
             "interactive: litellm-edge/cl/gpt-6-luna",
-            "small_fast: litellm-edge/an/gemini-3.7-flash-low",
+            "small_fast: litellm-edge/an/gemini-3.8-flash-low",
             "- cl/gpt-6.1-sol",
             "- an/claude-sonnet-5-5-high",
             "runtime_context_window: 98304",
             "pi_context_window: 73728",
         ),
         "catalog/agent-routing.yaml": (
-            "primary: litellm-edge/an/claude-opus-4-6",
+            "primary: litellm-edge/cl/gpt-6-luna",
             "orchestrator: litellm-edge/cl/gpt-6-luna",
             "litellm-edge/an/claude-sonnet-5-5-high",
             "litellm-edge/cl/gpt-6.1-sol",
         ),
         "profiles/default.yaml": (
             "interactive_model: litellm-edge/cl/gpt-6-luna",
-            "small_model: litellm-edge/an/gemini-3.7-flash-low",
+            "small_model: litellm-edge/an/gemini-3.8-flash-low",
         ),
         "profiles/local-first.yaml": (
             "interactive_model: litellm-edge/un/qwen3.8-27b-gguf",

@@ -10,7 +10,7 @@ provider_priority:
 
 defaults:
   interactive: litellm-edge/cl/gpt-6-luna
-  small_fast: litellm-edge/an/gemini-3.7-flash-low
+  small_fast: litellm-edge/an/gemini-3.8-flash-low
 
 approved_ordinary_families:
   - an/claude-haiku-4-5-20251001
@@ -19,9 +19,9 @@ approved_ordinary_families:
   - an/gemini-3.1-pro
   - an/gemini-3.1-pro-high
   - an/gemini-3.1-pro-low
-  - an/gemini-3.7-flash-high
-  - an/gemini-3.7-flash-low
-  - an/gemini-3.7-flash-medium
+  - an/gemini-3.8-flash-high
+  - an/gemini-3.8-flash-low
+  - an/gemini-3.8-flash-medium
   - an/gpt-oss-120b-medium
   - cl/gpt-6-luna
   - cl/gpt-6.1-sol

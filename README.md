@@ -105,8 +105,10 @@ Recommended defaults:
 - interactive: `litellm-edge/cl/gpt-6-luna`;
 - Sol reasoning route: `litellm-edge/cl/gpt-6.1-sol` (legacy GPT-6 Sol IDs are aliased centrally);
 - Sonnet implementation/plan: `litellm-edge/an/claude-sonnet-5-5-high` (legacy Sonnet 4.6 IDs are aliased centrally);
-- small/fast: `litellm-edge/an/gemini-3.7-flash-low`;
-- reviewer/oracle: `litellm-edge/an/claude-opus-4-6` with Gemini and GPT fallbacks.
+- small/fast: `litellm-edge/an/gemini-3.8-flash-low`;
+- Pi worker/reviewer: `litellm-edge/cl/gpt-6-luna` (reviewer thinking high);
+- Pi oracle: `litellm-edge/cl/gpt-6.1-sol` (thinking high);
+- Pi selects one model per run; provider errors require an explicit subsequent launch, not automatic client fallback.
 
 See [`docs/litellm-routing-aliases.md`](docs/litellm-routing-aliases.md) for the verified legacy-ID routing contract and its verification limits.
 

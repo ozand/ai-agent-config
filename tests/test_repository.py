@@ -57,7 +57,7 @@ class RepositoryPolicyTests(unittest.TestCase):
         self.assertEqual(opencode["model"], "litellm-edge/cl/gpt-6-luna")
         self.assertEqual(
             opencode["small_model"],
-            "litellm-edge/an/gemini-3.7-flash-low",
+            "litellm-edge/an/gemini-3.8-flash-low",
         )
 
     def test_secret_references_are_not_literals(self) -> None:
@@ -158,7 +158,7 @@ class RepositoryPolicyTests(unittest.TestCase):
         local_profile = (ROOT / "profiles/local-first.yaml").read_text(encoding="utf-8")
         self.assertIn("interactive: litellm-edge/cl/gpt-6-luna", policy)
         self.assertIn(
-            "small_fast: litellm-edge/an/gemini-3.7-flash-low",
+            "small_fast: litellm-edge/an/gemini-3.8-flash-low",
             policy,
         )
         self.assertIn(

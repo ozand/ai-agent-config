@@ -87,6 +87,8 @@ def validate_catalog_parity() -> None:
         from render_clients import opencode_model
         pi = load_json(ROOT / "clients/pi/models.template.json")
         oc = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
+        if any(m["id"] != m["piModel"]["id"] for m in canonical["models"]):
+            fail("Catalog envelope and Pi model IDs differ")
         expected = [m["piModel"] for m in canonical["models"]]
         if pi["providers"]["litellm-edge"]["models"] != expected:
             fail("Exact ordered Pi snapshot parity failed")

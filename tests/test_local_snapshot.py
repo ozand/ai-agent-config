@@ -29,6 +29,17 @@ class LocalSnapshotTests(unittest.TestCase):
         for mid in ['un/qwen3.6-27b-mtp', 'cl/gpt-5.5', 'om/glm-ocr-q8', 'om/qwen3-embedding-4b']:
             self.assertIn(mid, [m['id'] for m in expected])
 
+    def test_mismatched_model_ids_rejected(self):
+        import sys
+        from unittest.mock import patch
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        import validate
+        bad = copy.deepcopy(self.catalog)
+        bad['models'][0]['piModel']['id'] = 'different/route'
+        with patch.object(validate, 'load_json', return_value=bad):
+            with self.assertRaisesRegex(AssertionError, 'IDs differ'):
+                validate.validate_catalog_parity()
+
     def test_unknown_pi_field_preserved(self):
         entry = copy.deepcopy(self.catalog['models'][0])
         entry['piModel']['futureField'] = {'nested': [None, 0, False]}

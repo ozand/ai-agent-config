@@ -32,8 +32,8 @@ A dry run prints a deterministic plan and sanitized unified diff. It does not cr
 Pi:
 
 - `models.json`: the `litellm-edge` provider and its tracked model catalog; other providers, provider extension keys, and locally-added models remain intact;
-- `settings.json`: repository-owned defaults, enabled model patterns, required packages/extensions, and subagent overrides; unrelated runtime settings remain intact. On a first install, missing files are seeded from the template, including non-owned runtime defaults; later runs do not update those non-owned keys;
-- the tracked credential-reader helper and auto-compact extension (copied as files, without reading the local secret).
+- `settings.json`: repository-owned defaults, enabled model patterns, required packages/extensions, Powerline preset defaults, and subagent overrides; unrelated runtime settings remain intact. Existing Powerline object settings are preserved and supplemented with missing template keys; explicit shorthand presets are preserved. On a first install, missing files are seeded from the template, including non-owned runtime defaults; later runs do not update those non-owned keys;
+- the tracked credential-reader helper (copied as a file, without reading the local secret). The repository does not install or delete custom auto-compaction extensions. Remove the legacy `auto-compact-272k.ts` file manually if migrating from an older template.
 
 OpenCode:
 

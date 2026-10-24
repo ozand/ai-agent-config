@@ -34,6 +34,7 @@ PI_SETTINGS_OWNED = (
     "enabledModels",
     "packages",
     "extensions",
+    "powerline",
     "subagents",
 )
 OPENCODE_ROOT_OWNED = {"model", "small_model", "default_agent"}
@@ -291,6 +292,15 @@ def _merge_string_list(existing: Any, template: Any) -> Any:
     return result
 
 
+def _is_legacy_auto_compact_extension(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    normalized = value.replace("\\", "/").casefold()
+    return normalized == "~/.pi/agent/extensions/auto-compact-272k.ts" or normalized.endswith(
+        "/.pi/agent/extensions/auto-compact-272k.ts"
+    )
+
+
 def merge_pi_models(existing: dict[str, Any] | None, template: dict[str, Any]) -> dict[str, Any]:
     result = deepcopy(existing or {})
     providers = result.setdefault("providers", {})
@@ -317,10 +327,27 @@ def merge_pi_settings(existing: dict[str, Any] | None, template: dict[str, Any])
             continue
         if key in {"packages", "extensions"}:
             result[key] = _merge_string_list(result.get(key), template[key])
+        elif key == "powerline" and isinstance(template[key], dict):
+            existing_powerline = result.get(key)
+            if isinstance(existing_powerline, dict):
+                # Seed the repository's default preset without clobbering
+                # host-local Powerline preferences.
+                result[key] = _merge_object(template[key], existing_powerline)
+            elif key not in result:
+                result[key] = deepcopy(template[key])
+            # Preserve valid local shorthand presets and other explicit values.
         elif key == "subagents" and isinstance(result.get(key), dict) and isinstance(template[key], dict):
             result[key] = _merge_object(result[key], template[key])
         else:
             result[key] = deepcopy(template[key])
+    # Retire the exact old repository-managed reference while keeping all other
+    # local extensions intact. The installer intentionally leaves extension
+    # files on disk for explicit user review rather than deleting user files.
+    if isinstance(result.get("extensions"), list):
+        result["extensions"] = [
+            item for item in result["extensions"]
+            if not _is_legacy_auto_compact_extension(item)
+        ]
     return result
 
 
@@ -487,7 +514,6 @@ def build_plans(
         ]
         for source_rel, target_rel in (
             ("clients/pi/scripts/read-litellm-api-key.ps1", "scripts/read-litellm-api-key.ps1"),
-            ("clients/pi/extensions/auto-compact-272k.ts", "extensions/auto-compact-272k.ts"),
         ):
             source = source_root / source_rel
             target = target_dir / target_rel

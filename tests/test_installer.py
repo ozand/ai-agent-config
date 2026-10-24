@@ -81,7 +81,36 @@ class InstallerTests(unittest.TestCase):
         settings = json.loads((self.pi / "settings.json").read_text(encoding="utf-8"))
         self.assertEqual(settings["theme"], "user-theme")
         self.assertIn("npm:local-plugin@1", settings["packages"])
+        self.assertIn("https://github.com/nicobailon/pi-powerline-footer", settings["packages"])
+        self.assertEqual(settings["powerline"], {"preset": "default"})
         self.assertTrue(list((self.root / "backup").glob("ai-agent-config-*/MANIFEST.txt")))
+
+    def test_pi_merge_preserves_local_powerline_preferences(self) -> None:
+        self.write_json(self.pi / "settings.json", {"powerline": {"preset": "minimal", "welcome": False}})
+        result = run_tool(
+            "--client", "pi", "--pi-dir", str(self.pi), "--apply", "--confirm-apply",
+            "--backup-dir", str(self.root / "backup"),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        settings = json.loads((self.pi / "settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(settings["powerline"], {"preset": "minimal", "welcome": False})
+
+    def test_pi_merge_preserves_legacy_automatically_discovered_extension(self) -> None:
+        legacy_extension = self.pi / "extensions" / "auto-compact-272k.ts"
+        legacy_extension.parent.mkdir()
+        legacy_extension.write_text("// user-managed legacy extension\n", encoding="utf-8")
+        self.write_json(
+            self.pi / "settings.json",
+            {"extensions": ["~/.pi/agent/extensions/auto-compact-272k.ts", "./extensions/local.ts"]},
+        )
+        result = run_tool(
+            "--client", "pi", "--pi-dir", str(self.pi), "--apply", "--confirm-apply",
+            "--backup-dir", str(self.root / "backup"),
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(legacy_extension.read_text(encoding="utf-8"), "// user-managed legacy extension\n")
+        settings = json.loads((self.pi / "settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(settings["extensions"], ["./extensions/local.ts"])
 
     def test_opencode_preserves_unrelated_sections_and_agents(self) -> None:
         self.write_json(

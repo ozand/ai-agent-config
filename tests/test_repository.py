@@ -54,6 +54,9 @@ class RepositoryPolicyTests(unittest.TestCase):
         pi = load_json("clients/pi/settings.template.json")
         opencode = load_json("clients/opencode/opencode.template.jsonc")
         self.assertEqual(pi["defaultModel"], "cl/gpt-6-luna")
+        self.assertEqual(pi["powerline"], {"preset": "default"})
+        self.assertIn("https://github.com/nicobailon/pi-powerline-footer", pi["packages"])
+        self.assertNotIn("auto-compact-272k", json.dumps(pi))
         self.assertEqual(opencode["model"], "litellm-edge/cl/gpt-6-luna")
         self.assertEqual(
             opencode["small_model"],

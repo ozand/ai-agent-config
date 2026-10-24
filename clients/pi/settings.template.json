@@ -12,12 +12,13 @@
     "npm:context-mode@1.0.169",
     "npm:pi-subagents@0.50.0",
     "npm:pi-interactive-shell@0.15.0",
-    "npm:pi-intercom@0.10.1"
+    "npm:pi-intercom@0.10.1",
+    "https://github.com/nicobailon/pi-powerline-footer"
   ],
   "theme": "dark",
-  "extensions": [
-    "~/.pi/agent/extensions/auto-compact-272k.ts"
-  ],
+  "powerline": {
+    "preset": "default"
+  },
   "quietStartup": true,
   "hideThinkingBlock": false,
   "compaction": {

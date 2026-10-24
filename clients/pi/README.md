@@ -8,7 +8,6 @@ Windows:
 %USERPROFILE%\.pi\agent\models.json
 %USERPROFILE%\.pi\agent\settings.json
 %USERPROFILE%\.pi\agent\scripts\read-litellm-api-key.ps1
-%USERPROFILE%\.pi\agent\extensions\auto-compact-272k.ts
 ```
 
 Linux/macOS equivalents live under `~/.pi/agent/`.
@@ -18,7 +17,7 @@ Linux/macOS equivalents live under `~/.pi/agent/`.
 - `models.template.json` — exact owner-local model entries: 49 litellm-edge plus 1 local model. Provider secrets/private endpoints are replaced by safe references/placeholders. Configure the local endpoint before use.
 - `settings.template.json` — non-secret defaults and subagent routing.
 - `scripts/read-litellm-api-key.ps1` — Windows file-backed credential resolver.
-- `extensions/auto-compact-272k.ts` — selective large-context compaction.
+- `powerline` settings — enables the default `pi-powerline-footer` preset.
 - `prompts/` — reviewed, reusable Pi slash-command prompt templates; see [`../../docs/pi-prompt-sharing.md`](../../docs/pi-prompt-sharing.md).
 
 The reusable prompt set includes `/git-sync-status`, `/status-ru`, `/project-overview`, `/capture-learnings`, `/execute-plan`, and `/create-issues`. Install only these reviewed files from `clients/pi/prompts/`; do not copy a personal prompt directory wholesale.
@@ -37,10 +36,10 @@ Do not replace the `apiKey` command with a literal credential.
 
 1. Back up existing Pi files outside the repository.
 2. Compare existing providers, packages, extensions, and subagent overrides.
-3. Copy the helper script and extension.
+3. Copy the credential helper script.
 4. Merge `models.template.json` into `models.json`.
 5. Merge `settings.template.json` into `settings.json`.
-6. Preserve unrelated providers and local runtime preferences.
+6. Preserve unrelated providers and local runtime preferences. Pi's built-in compaction remains enabled. When migrating from an earlier template, remove the old `auto-compact-272k.ts` entry from `settings.json` (if present) and delete that file from the Pi agent extension directory; the installer does not delete existing files.
 
 Do not copy or edit:
 

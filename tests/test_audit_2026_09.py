@@ -5,7 +5,7 @@ Covers:
 - GPT-5.6 context window conflict is documented in canonical catalog
 - GPT-5.6 Sol cache prices corrected to endpoint evidence
 - Sonnet 5.5 High pricing is current and rendered into both client catalogs
-- Compaction policy is documented in the default profile
+- Native Pi compaction policy is documented in the default profile
 - Current Sonnet and GPT Sol generations are approved
 - Canonical model count has not silently changed
 """
@@ -177,35 +177,23 @@ class SonnetCacheConflictTests(unittest.TestCase):
 
 
 class CompactionPolicyTests(unittest.TestCase):
-    """Pi compaction threshold and OpenCode DCP strategy must be explicitly documented."""
+    """Pi uses native compaction; the repository does not install a threshold extension."""
 
-    def test_default_profile_documents_compaction_threshold(self) -> None:
+    def test_default_profile_documents_native_compaction(self) -> None:
         text = (ROOT / "profiles/default.yaml").read_text(encoding="utf-8")
-        self.assertIn(
-            "272000",
-            text,
-            "Default profile must document the Pi compaction threshold (272000)",
-        )
-        # Must explain it is intentional / conservative
-        self.assertIn(
-            "compaction",
-            text.lower(),
-            "Default profile must reference compaction policy",
-        )
-        self.assertIn("context window", text.lower())
-        extension = (ROOT / "clients/pi/extensions/auto-compact-272k.ts").read_text(encoding="utf-8")
-        self.assertIn("contextWindow <= COMPACT_THRESHOLD_TOKENS", extension)
+        self.assertIn("pi_strategy: native", text)
         self.assertIn("pi_reserve_tokens: 16384", text)
         self.assertIn("pi_keep_recent_tokens: 20000", text)
+        self.assertIn("native compaction", text.lower())
+        self.assertFalse((ROOT / "clients/pi/extensions/auto-compact-272k.ts").exists())
+        settings = load_json("clients/pi/settings.template.json")
+        self.assertNotIn("auto-compact-272k", json.dumps(settings))
 
     def test_default_profile_documents_client_strategy_difference(self) -> None:
-        """Pi threshold vs OpenCode DCP must be documented as intentionally different."""
+        """Native Pi compaction and OpenCode DCP remain separate strategies."""
         text = (ROOT / "profiles/default.yaml").read_text(encoding="utf-8")
-        self.assertIn(
-            "OpenCode",
-            text,
-            "Default profile must mention OpenCode to distinguish client strategies",
-        )
+        self.assertIn("OpenCode", text)
+        self.assertIn("Pi's native compaction", text)
 
 
 class CurrentGenerationApprovalTests(unittest.TestCase):

@@ -113,23 +113,20 @@ Context/output limits for Gemini 3.7 tiers remain unknown from this endpoint.
 Do not infer limits. High/medium tiers lack pricing in the repository and endpoint;
 this is consistent with policy (no price inference).
 
-## Compaction policy audit
+## Compaction policy audit (historical snapshot)
 
-Pi client uses a fixed 272,000-token auto-compaction threshold (extension
-`~/.pi/agent/extensions/auto-compact-272k.ts`) for models whose context window
-exceeds the threshold, with `reserveTokens: 16,384` and `keepRecentTokens: 20,000`.
-Smaller-context models are intentionally skipped. This is an intentional conservative choice.
-
-OpenCode uses agent-specific DCP (Dynamic Context Pruning) ranges that vary
-by model capability. These are model-specific client strategies, not conflicting global settings.
+At the time of this endpoint evidence collection, an earlier repository revision
+used a custom 272,000-token auto-compaction extension. That policy has since been
+removed from the reusable Pi template. The current template relies on Pi's native
+compaction settings; it does not install that historical extension or prescribe a
+fixed token threshold.
 
 The live runtime was observed to have a 560,000-token compaction threshold for some
-routes. **Repository templates do not adopt this value**: Pi's 272k threshold is
-an explicitly conservative strategy documented in `profiles/default.yaml` and
-`clients/pi/settings.template.json`. Do not replace it with the live runtime value
-without a deliberate policy decision and documented rationale.
+routes during the historical audit. That observation is not a current repository
+policy or a value to copy into the template without a separate decision.
 
-See test `test_compaction_policy_documented` for enforcement.
+OpenCode uses agent-specific DCP (Dynamic Context Pruning) ranges that vary by
+model capability. These remain OpenCode-specific client strategies.
 
 ## Approved catalog reconciliation matrix
 

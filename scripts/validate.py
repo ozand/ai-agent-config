@@ -83,6 +83,23 @@ def model_ids() -> tuple[set[str], set[str], set[str]]:
 
 def validate_catalog_parity() -> None:
     canonical = load_json(ROOT / "catalog/models.json")
+    if canonical.get("schemaVersion") == 2:
+        from render_clients import opencode_model
+        pi = load_json(ROOT / "clients/pi/models.template.json")
+        oc = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
+        if any(m["id"] != m["piModel"]["id"] for m in canonical["models"]):
+            fail("Catalog envelope and Pi model IDs differ")
+        expected = [m["piModel"] for m in canonical["models"]]
+        if pi["providers"]["litellm-edge"]["models"] != expected:
+            fail("Exact ordered Pi snapshot parity failed")
+        if len({m["id"] for m in expected}) != len(expected):
+            fail("Duplicate snapshot IDs")
+        if oc["provider"]["litellm-edge"]["models"] != {m["id"]: opencode_model(m) for m in canonical["models"]}:
+            fail("OpenCode snapshot projection differs")
+        for provider, config in canonical.get("additionalProviders", {}).items():
+            if pi["providers"].get(provider) != config:
+                fail("Additional provider template differs")
+        return
     pi = load_json(ROOT / "clients/pi/models.template.json")
     opencode = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
     canonical_ids, pi_ids, opencode_ids = model_ids()
@@ -125,8 +142,8 @@ def validate_defaults() -> None:
         fail("Pi default model must be cl/gpt-6-luna")
     if opencode["model"] != "litellm-edge/cl/gpt-6-luna":
         fail("OpenCode default model must be provider-qualified Luna")
-    if opencode["small_model"] != "litellm-edge/an/gemini-3.7-flash-low":
-        fail("OpenCode small model must be Gemini 3.7 Flash Low")
+    if opencode["small_model"] != "litellm-edge/an/gemini-3.8-flash-low":
+        fail("OpenCode small model must be Gemini 3.8 Flash Low")
 
 
 def validate_routes() -> None:
@@ -156,6 +173,10 @@ def validate_routes() -> None:
 
 def validate_qwen() -> None:
     canonical = load_json(ROOT / "catalog/models.json")
+    if canonical.get("schemaVersion") == 2:
+        # Configuration parity is authoritative; historical endpoint/local-cost
+        # policy remains in archived evidence, not a rendering override.
+        return
     pi = load_json(ROOT / "clients/pi/models.template.json")
     opencode = load_json(ROOT / "clients/opencode/opencode.template.jsonc")
 
@@ -208,21 +229,21 @@ def validate_policy_documents() -> None:
     required_markers = {
         "catalog/model-policy.yaml": (
             "interactive: litellm-edge/cl/gpt-6-luna",
-            "small_fast: litellm-edge/an/gemini-3.7-flash-low",
+            "small_fast: litellm-edge/an/gemini-3.8-flash-low",
             "- cl/gpt-6.1-sol",
             "- an/claude-sonnet-5-5-high",
             "runtime_context_window: 98304",
-            "pi_context_window: 73728",
+            "pi_context_window: 98304",
         ),
         "catalog/agent-routing.yaml": (
-            "primary: litellm-edge/an/claude-opus-4-6",
+            "primary: litellm-edge/cl/gpt-6-luna",
             "orchestrator: litellm-edge/cl/gpt-6-luna",
             "litellm-edge/an/claude-sonnet-5-5-high",
             "litellm-edge/cl/gpt-6.1-sol",
         ),
         "profiles/default.yaml": (
             "interactive_model: litellm-edge/cl/gpt-6-luna",
-            "small_model: litellm-edge/an/gemini-3.7-flash-low",
+            "small_model: litellm-edge/an/gemini-3.8-flash-low",
         ),
         "profiles/local-first.yaml": (
             "interactive_model: litellm-edge/un/qwen3.8-27b-gguf",

@@ -8,6 +8,8 @@ This directory contains reviewed, reusable Pi prompt templates. Each direct `.md
 - `/status-ru` — write a concise, verified project status report in Russian.
 - `/project-overview` — summarize the current repository from its instructions and documentation without modifying files.
 - `/capture-learnings [context]` — review completed work and record reusable, evidence-labeled learnings through the project's established memory mechanism.
+- `/execute-plan [plan]` — implement an approved plan with routine autonomy and explicit risk/delivery boundaries.
+- `/create-issues [scope]` — prepare sanitized issue drafts, checking for duplicates where issue access is available; never auto-close issues.
 
 Before using a project-scoped prompt, review it and grant project trust only to content you trust. After installation or changes, run `/reload` and verify the command in the active Pi `/` menu.
 

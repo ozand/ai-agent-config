@@ -59,7 +59,13 @@ Local secret file or secret manager
 6. Validate model parity and secret safety.
 7. Apply locally through a controlled merge.
 
-## Cost schema
+## Owner-local snapshot authority (ADR-003)
+
+Catalog schemaVersion 2 stores exact ordered model entries in `piModel` and sanitized additional provider templates. These objects, not historical reference metadata, drive Pi rendering. The owner-selected local configuration is authoritative: no endpoint-based curation or cost/context normalization. OpenCode is a supported-field projection, not an identical schema. Host-local endpoints are placeholders requiring local configuration.
+
+## Historical/reference cost schema
+
+The rules below apply to reference metadata, not to exact configured values in `piModel`. A configured zero is retained without claiming measured zero operating cost.
 
 The catalog distinguishes two cost fields:
 

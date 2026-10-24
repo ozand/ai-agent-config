@@ -1,7 +1,7 @@
 ---
 description: Writes and maintains project documentation
 mode: subagent
-model: litellm-edge/an/gemini-3.7-flash-low
+model: litellm-edge/an/gemini-3.8-flash-low
 permission:
   bash: deny
 ---

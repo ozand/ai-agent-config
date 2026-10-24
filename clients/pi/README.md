@@ -15,13 +15,13 @@ Linux/macOS equivalents live under `~/.pi/agent/`.
 
 ## Files in this directory
 
-- `models.template.json` — sanitized provider and 40-model catalog.
+- `models.template.json` — exact owner-local model entries: 49 litellm-edge plus 1 local model. Provider secrets/private endpoints are replaced by safe references/placeholders. Configure the local endpoint before use.
 - `settings.template.json` — non-secret defaults and subagent routing.
 - `scripts/read-litellm-api-key.ps1` — Windows file-backed credential resolver.
 - `extensions/auto-compact-272k.ts` — selective large-context compaction.
 - `prompts/` — reviewed, reusable Pi slash-command prompt templates; see [`../../docs/pi-prompt-sharing.md`](../../docs/pi-prompt-sharing.md).
 
-The initial reusable prompt set includes `/git-sync-status`, `/status-ru`, `/project-overview`, and `/capture-learnings`. Install only these reviewed files from `clients/pi/prompts/`; do not copy a personal prompt directory wholesale.
+The reusable prompt set includes `/git-sync-status`, `/status-ru`, `/project-overview`, `/capture-learnings`, `/execute-plan`, and `/create-issues`. Install only these reviewed files from `clients/pi/prompts/`; do not copy a personal prompt directory wholesale.
 
 ## Credential setup
 

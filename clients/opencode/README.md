@@ -51,7 +51,7 @@ Expected defaults:
 
 ```text
 model: litellm-edge/cl/gpt-6-luna
-small_model: litellm-edge/an/gemini-3.7-flash-low
+small_model: litellm-edge/an/gemini-3.8-flash-low
 ```
 
 ## Qwen schema boundary

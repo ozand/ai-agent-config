@@ -38,4 +38,8 @@ Personal prompt files outside the repository are not copied wholesale. Only expl
 4. Verify its frontmatter and argument substitutions against the official prompt-template documentation.
 5. Check that the prompt does not direct unsafe or irreversible actions without an approval gate.
 6. Add it under `clients/pi/prompts/`, link it from the Pi README, and review the staged diff by allowlist.
-7. After installation, run `/reload` and verify the command appears in Pi's `/` menu. A file existing in the repository alone does not prove runtime discovery.
+7. After installation, run `/reload` and verify the command appears in Pi's `/` menu.
+
+## Plan and issue prompt boundaries
+
+`/execute-plan` supports user-approved autonomy for routine, reversible implementation and validation steps. It instructs the agent to stop before scope expansion, risky or irreversible operations, or external delivery that is not specifically authorized. `/create-issues` produces issue drafts and asks for duplicate checks when repository issue access is available; lack of access must be disclosed. It never closes issues automatically and external submission requires explicit authorization. Both prompts are instructions, not technical controls: they cannot enforce tool permissions, repository policies, approvals, or a local delivery gate. The active environment and user instructions remain authoritative. A file existing in the repository alone does not prove runtime discovery.

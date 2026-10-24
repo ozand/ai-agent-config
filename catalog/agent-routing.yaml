@@ -1,36 +1,21 @@
 schema_version: 1
 
+# Pi selects one model per run; provider failures require an explicit later launch.
 pi:
   scout:
     primary: litellm-edge/cl/gpt-6-luna
-    fallbacks:
-      - litellm-edge/an/gemini-3.8-flash-low
-      - litellm-edge/cl/gpt-5.6-terra
   researcher:
     primary: litellm-edge/an/gemini-3.1-pro-high
-    fallbacks:
-      - litellm-edge/an/gemini-3.8-flash-high
-      - litellm-edge/cl/gpt-5.6-terra
   oracle:
-    primary: litellm-edge/an/claude-opus-4-6
-    fallbacks:
-      - litellm-edge/an/gemini-3.1-pro-high
-      - litellm-edge/cl/gpt-6.1-sol
+    primary: litellm-edge/cl/gpt-6.1-sol
+    thinking: high
   worker:
-    primary: litellm-edge/an/claude-sonnet-5-5-high
-    fallbacks:
-      - litellm-edge/an/gemini-3.8-flash-high
-      - litellm-edge/cl/gpt-5.6-terra
+    primary: litellm-edge/cl/gpt-6-luna
   reviewer:
-    primary: litellm-edge/an/claude-opus-4-6
-    fallbacks:
-      - litellm-edge/an/gemini-3.1-pro-high
-      - litellm-edge/cl/gpt-6.1-sol
+    primary: litellm-edge/cl/gpt-6-luna
+    thinking: high
   delegate:
     primary: litellm-edge/an/gemini-3.8-flash-high
-    fallbacks:
-      - litellm-edge/an/gemini-3.1-pro-high
-      - litellm-edge/cl/gpt-5.6-terra
 
 opencode:
   orchestrator: litellm-edge/cl/gpt-6-luna

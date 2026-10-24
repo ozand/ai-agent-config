@@ -63,7 +63,13 @@ Pi executes this through Git Bash on Windows, so `$USERPROFILE` is intentional i
 
 ## Pi on Linux/macOS
 
-Prefer a user-only secret file or secret manager command. If using a file:
+The shared POSIX reader at `clients/pi/scripts/read-litellm-api-key.sh` is suitable for Linux and macOS. Install it locally under `~/.pi/agent/scripts/` and reference it from the local `models.json` using Pi's `!command` resolver:
+
+```json
+"apiKey": "!sh \"$HOME/.pi/agent/scripts/read-litellm-api-key.sh\""
+```
+
+Provision the secret without putting it in shell history or command arguments. The directory and file are user-only (`700` and `600`):
 
 ```bash
 install -d -m 700 "$HOME/.pi/agent/.secrets"
@@ -74,7 +80,11 @@ unset LITELLM_KEY
 chmod 600 "$HOME/.pi/agent/.secrets/litellm-api-key"
 ```
 
-Create a local reader command suitable for the platform and update only the local `models.json`. Do not commit platform-specific secret paths containing usernames.
+The reader writes only the file contents to stdout for Pi; missing and empty files exit nonzero and report a non-secret error to stderr. Do not run it manually in logs or diagnostics that capture stdout. Keep the script and secret local to the Pi user configuration; update only local `models.json`, and do not commit user-specific paths or credentials.
+
+### Validation evidence
+
+`tests/test_pi_secret_reader.py` uses a synthetic `HOME` and temporary files only. GitHub Actions runs the fixture tests on both `ubuntu-latest` (Linux) and `macos-latest` (macOS); those runs validate behavior on the named hosted runner OS, not on an owner-managed Linux/macOS host. They do not establish host-specific configuration or equivalence beyond the shared POSIX script contract. No real credential file or secret-reader stdout is used for tests.
 
 ## OpenCode
 

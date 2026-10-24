@@ -19,4 +19,4 @@
 
 - [x] Add a dry-run installer that merges client sections without overwriting unrelated configuration.
 - [x] Add a renderer freshness check to CI after a remote repository exists.
-- [ ] Add Linux/macOS secret-reader examples after validating them on target hosts.
+- [ ] Add a shared POSIX Pi secret reader and validate synthetic fixtures on hosted Linux/macOS runners; awaiting hosted runner evidence before completion.

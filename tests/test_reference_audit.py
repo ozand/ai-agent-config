@@ -351,9 +351,10 @@ class ReferenceAuditTests(unittest.TestCase):
         nested = deep
         source = nested / "source.md"
         source.write_text("source\n", encoding="utf-8")
-        roots = [self.allowed, nested]
-        self.assertEqual(reference_audit.choose_root(source.resolve(), roots), 1)
-        self.assertIsNone(reference_audit.choose_root(source.resolve(), [self.allowed]))
+        roots = [self.allowed.resolve(), nested.resolve()]
+        resolved_source = source.resolve()
+        self.assertEqual(reference_audit.choose_root(resolved_source, roots), 1)
+        self.assertIsNone(reference_audit.choose_root(resolved_source, [roots[0]]))
 
     def test_long_malformed_link_and_dynamic_prefixes_finish_bounded(self):
         import reference_audit
@@ -664,6 +665,13 @@ class ReferenceAuditTests(unittest.TestCase):
         self.assertIn("first  second", table)
         self.assertIn("first  second", table)
 
+    def test_public_safe_text_escapes_surrogates_and_tildes(self):
+        import reference_audit
+        self.assertEqual(
+            reference_audit.public_safe_text("literal ~ and \udcff\udcfe"),
+            "literal ~~ and ~uDCFF~~uDCFE~",
+        )
+
     def test_posix_surrogateescaped_source_locators_are_safe_and_distinct(self):
         import os
         import reference_audit
@@ -674,7 +682,13 @@ class ReferenceAuditTests(unittest.TestCase):
         try:
             for raw_name in raw_names:
                 full = os.fsencode(self.allowed) + b"/" + raw_name
-                fd = os.open(full, os.O_CREAT | os.O_WRONLY, 0o600)
+                try:
+                    fd = os.open(full, os.O_CREAT | os.O_WRONLY, 0o600)
+                except OSError as error:
+                    import errno
+                    if error.errno == errno.EILSEQ:
+                        self.skipTest("filesystem does not support invalid-byte filenames")
+                    raise
                 with os.fdopen(fd, "wb") as handle:
                     handle.write(b"See ./guide.md\\n")
                 created.append(os.fsdecode(full))

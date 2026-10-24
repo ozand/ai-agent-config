@@ -84,7 +84,7 @@ The reader writes only the file contents to stdout for Pi; missing and empty fil
 
 ### Validation evidence
 
-`tests/test_pi_secret_reader.py` uses a synthetic `HOME` and temporary files only. GitHub Actions runs the fixture tests on both `ubuntu-latest` (Linux) and `macos-latest` (macOS); those runs validate behavior on the named hosted runner OS, not on an owner-managed Linux/macOS host. They do not establish host-specific configuration or equivalence beyond the shared POSIX script contract. No real credential file or secret-reader stdout is used for tests.
+`tests/test_pi_secret_reader.py` uses a synthetic `HOME` and temporary files only. GitHub Actions run `40059257987` exercised the tests on actual hosted runner OSes, not owner-managed hosts: the full Ubuntu job passed, and the four secret-reader fixture tests passed on macOS (including POSIX permission checks). The full macOS job did not pass because two unrelated existing reference-audit tests fail there (temporary-path containment and creation of an invalid-byte filename); see the job log for details. Thus the shared reader's synthetic behavior was exercised on both OSes, but macOS full-suite validation remains outstanding. These results do not establish host-specific configuration or equivalence beyond the shared POSIX script contract. No real credential file or secret-reader stdout is used for tests.
 
 ## OpenCode
 

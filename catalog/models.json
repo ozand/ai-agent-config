@@ -1000,6 +1000,56 @@
           "cacheWrite": 0
         }
       }
+    },
+    {
+      "id": "cl/claude-opus-5-5-high",
+      "name": "Claude Opus 5.5 High",
+      "category": "chat",
+      "providerFamily": "cl",
+      "piModel": {
+        "id": "cl/claude-opus-5-5-high",
+        "name": "Claude Opus 5.5 High"
+      }
+    },
+    {
+      "id": "cl/gemini-4-argon-high",
+      "name": "Gemini 4 Argon High",
+      "category": "chat",
+      "providerFamily": "cl",
+      "piModel": {
+        "id": "cl/gemini-4-argon-high",
+        "name": "Gemini 4 Argon High"
+      }
+    },
+    {
+      "id": "cl/gpt-image-2.5",
+      "name": "GPT Image 2.5",
+      "category": "image-generation",
+      "providerFamily": "cl",
+      "piModel": {
+        "id": "cl/gpt-image-2.5",
+        "name": "GPT Image 2.5"
+      }
+    },
+    {
+      "id": "cl/gpt-image-2.5-flare",
+      "name": "GPT Image 2.5 Flare",
+      "category": "image-generation",
+      "providerFamily": "cl",
+      "piModel": {
+        "id": "cl/gpt-image-2.5-flare",
+        "name": "GPT Image 2.5 Flare"
+      }
+    },
+    {
+      "id": "cl/gpt-image-2.5-sunburst",
+      "name": "GPT Image 2.5 Sunburst",
+      "category": "image-generation",
+      "providerFamily": "cl",
+      "piModel": {
+        "id": "cl/gpt-image-2.5-sunburst",
+        "name": "GPT Image 2.5 Sunburst"
+      }
     }
   ],
   "additionalProviders": {

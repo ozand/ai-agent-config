@@ -1,6 +1,6 @@
 # Current authority supersedes the previous evidence below
 
-Owner explicitly selected the current local model entries as source of truth. Historical endpoint evidence below does not override copied configuration values. Current snapshot includes 49 litellm-edge entries and 1 local entry, exact Pi fields and order. SHA256 of original local source: 122107558b74925ca8562d5b25821e057b70c6f444a8ed1226ecf1f8bc99bf1d. Local provider endpoint is replaced with http://localhost:1234/v1 and a non-secret placeholder; configure locally before use. Zero configured prices are not measured operating cost. No endpoint requests, local writes or runtime operations performed in this correction. OpenCode projects supported fields, while Pi-only metadata remains in canonical piModel and Pi templates.
+Owner explicitly selected the current local model entries as source of truth. Historical endpoint evidence below does not override copied configuration values. The original snapshot included 49 litellm-edge entries and 1 local entry, exact Pi fields and order. SHA256 of original local source: 122107558b74925ca8562d5b25821e057b70c6f444a8ed1226ecf1f8bc99bf1d. Local provider endpoint is replaced with http://localhost:1234/v1 and a non-secret placeholder; configure locally before use. Zero configured prices are not measured operating cost. No endpoint requests, local writes or runtime operations performed in this correction. OpenCode projects supported fields, while Pi-only metadata remains in canonical piModel and Pi templates.
 
 # Model routing synchronization evidence
 
@@ -24,3 +24,7 @@ Pi worker/reviewer select Luna, reviewer thinking high; oracle selects Sol, thin
 Installed pi-subagents documentation states one model per launch and no provider-error fallback. Its agent override parser explicitly rejects the removed `fallbackModels` field. Pi templates therefore omit it, and canonical Pi role routing no longer advertises automatic fallback. This does not modify LiteLLM server routing. Existing package pins are not updated by this increment.
 
 Local application and active-session verification are distinct from repository publication. No restart, reload, package install, server edit or failed-task retry is authorized by this receipt.
+
+## Verified CLIProxy additions (2026-11-02)
+
+Text completions for `cl/claude-opus-5-5-high` and `cl/gemini-4-argon-high` succeeded through local and public LiteLLM. Local LiteLLM image-generation requests for `cl/gpt-image-2.5`, `cl/gpt-image-2.5-flare`, and `cl/gpt-image-2.5-sunburst` returned images. Registration does not establish image-generation support in Pi or OpenCode. Pricing, context, output limits, and other capabilities for these routes are unverified and omitted. Three other candidates returned upstream 503 and remain excluded. The prior owner-selected 49-entry snapshot remains historical; this update adds five entries without modifying the others. No client activation is claimed.

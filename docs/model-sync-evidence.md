@@ -28,3 +28,7 @@ Local application and active-session verification are distinct from repository p
 ## Verified CLIProxy additions (2026-11-02)
 
 Text completions for `cl/claude-opus-5-5-high` and `cl/gemini-4-argon-high` succeeded through local and public LiteLLM. Local LiteLLM image-generation requests for `cl/gpt-image-2.5`, `cl/gpt-image-2.5-flare`, and `cl/gpt-image-2.5-sunburst` returned images. Registration does not establish image-generation support in Pi or OpenCode. Pricing, context, output limits, and other capabilities for these routes are unverified and omitted. Three other candidates returned upstream 503 and remain excluded. The prior owner-selected 49-entry snapshot remains historical; this update adds five entries without modifying the others. No client activation is claimed.
+
+## Terra and Qwen correction (2026-11-05)
+
+The current route is `cl/gpt-6.1-terra`; legacy GPT-5.6 Terra references are historical compatibility documentation. The current DavidAU route is `un/qwen3.8-27b-mtp-davidau` with verified runtime context 98,048. Pi advertises the same 98,048 context. No output limit or multimodal capability is claimed.

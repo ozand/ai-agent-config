@@ -26,7 +26,7 @@ class LocalSnapshotTests(unittest.TestCase):
             digest = hashlib.sha256(json.dumps(entries, sort_keys=True, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
             self.assertEqual(digest, manifest['providers'][provider]['sha256'])
         self.assertEqual(self.pi['providers']['local']['models'], self.catalog['additionalProviders']['local']['models'])
-        for mid in ['un/qwen3.6-27b-mtp', 'cl/gpt-5.5', 'om/glm-ocr-q8', 'om/qwen3-embedding-4b']:
+        for mid in ['un/qwen3.8-27b-mtp-davidau', 'cl/gpt-5.5', 'om/glm-ocr-q8', 'om/qwen3-embedding-4b']:
             self.assertIn(mid, [m['id'] for m in expected])
 
     def test_mismatched_model_ids_rejected(self):
@@ -47,12 +47,12 @@ class LocalSnapshotTests(unittest.TestCase):
         self.assertEqual(renderer.pi_model(entry)['futureField']['nested'], [None, 0, False])
 
     def test_opencode_projection(self):
-        qwen = next(m for m in self.catalog['models'] if m['id'] == 'un/qwen3.6-27b-mtp')
+        qwen = next(m for m in self.catalog['models'] if m['id'] == 'un/qwen3.8-27b-mtp-davidau')
         projected = renderer.opencode_model(qwen)
         self.assertNotIn('limit', projected)  # Output limit absent, not invented.
         self.assertNotIn('compat', projected)
         self.assertNotIn('thinkingLevelMap', projected)
-        self.assertEqual(projected['cost']['input'], qwen['piModel']['cost']['input'])
+        self.assertNotIn('cost', projected)
 
     def test_local_provider_placeholder(self):
         config = self.pi['providers']['local']

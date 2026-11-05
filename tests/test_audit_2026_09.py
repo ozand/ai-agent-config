@@ -73,7 +73,7 @@ class ProvenanceReceiptTests(unittest.TestCase):
 class ContextWindowConflictTests(unittest.TestCase):
     """GPT-5.6 family must carry explicit context window conflict documentation."""
 
-    GPT56_6_IDS = {"cl/gpt-6-luna", "cl/gpt-5.6-terra"}
+    GPT56_6_IDS = {"cl/gpt-6-luna"}
 
     def _catalog_by_id(self) -> dict:
         return {
@@ -116,6 +116,22 @@ class ContextWindowConflictTests(unittest.TestCase):
         by_id = self._catalog_by_id()
         self.assertEqual(by_id["cl/gpt-6.1-sol"]["contextWindow"], 922000)
         self.assertNotIn("providerContextWindow", by_id["cl/gpt-6.1-sol"])
+
+
+class TerraAndQwenCorrectionTests(unittest.TestCase):
+    def test_current_terra_and_qwen_ids(self) -> None:
+        ids = {m["id"] for m in load_json("catalog/models.json")["models"]}
+        self.assertIn("cl/gpt-6.1-terra", ids)
+        self.assertNotIn("cl/gpt-5.6-terra", ids)
+        self.assertIn("un/qwen3.8-27b-mtp-davidau", ids)
+        self.assertNotIn("un/qwen3.6-27b-mtp", ids)
+
+    def test_qwen_context_is_verified_runtime_value(self) -> None:
+        model = next(m for m in load_json("catalog/models.json")["models"] if m["id"] == "un/qwen3.8-27b-mtp-davidau")
+        self.assertEqual(model["runtimeContextWindow"], 98048)
+        self.assertEqual(model["piModel"]["contextWindow"], 98048)
+        self.assertNotIn("maxTokens", model["piModel"])
+        self.assertEqual(model["piModel"]["contextWindow"], 98048)
 
 
 class SolCachePriceTests(unittest.TestCase):

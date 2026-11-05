@@ -644,8 +644,8 @@
       }
     },
     {
-      "id": "cl/gpt-5.6-terra",
-      "name": "GPT-5.6 Terra",
+      "id": "cl/gpt-6.1-terra",
+      "name": "GPT-6.1 Terra",
       "category": "chat",
       "providerFamily": "cl",
       "reasoning": true,
@@ -659,10 +659,10 @@
       "contextWindow": 922000,
       "maxTokens": 128000,
       "costPerMillion": {
-        "input": 2.0,
-        "output": 12.0,
-        "cacheRead": 0.2,
-        "cacheWrite": 2.5
+        "input": 1.0,
+        "output": 5.0,
+        "cacheRead": 0.05,
+        "cacheWrite": 1.25
       },
       "reasoningVariants": [
         "low",
@@ -670,11 +670,9 @@
         "high",
         "xhigh"
       ],
-      "providerContextWindow": 1050000,
-      "contextWindowConflict": "Endpoint reported max_input_tokens=922000 on 2026-09-08; provider documentation records 1050000 while the authenticated proxy reports 922000. The client-safe limit is set to 922000; providerContextWindow retains 1050000. See docs/endpoint-evidence-receipt-2026-09-08.md.",
       "piModel": {
-        "id": "cl/gpt-5.6-terra",
-        "name": "GPT-5.6 Terra",
+        "id": "cl/gpt-6.1-terra",
+        "name": "GPT-6.1 Terra",
         "reasoning": true,
         "thinkingLevelMap": {
           "off": null,
@@ -685,18 +683,26 @@
           "xhigh": "xhigh",
           "max": "xhigh"
         },
-        "contextWindow": 1050000,
+        "contextWindow": 922000,
         "maxTokens": 128000,
         "input": [
           "text",
           "image"
         ],
+        "output": [
+          "text"
+        ],
         "cost": {
-          "input": 2,
-          "output": 12,
-          "cacheRead": 0.2,
-          "cacheWrite": 2.5
+          "input": 1,
+          "output": 5,
+          "cacheRead": 0.05,
+          "cacheWrite": 1.25
         }
+      },
+      "costSource": {
+        "url": "https://raw.githubusercontent.com/BerriAI/litellm/1c022d1d06dba1cb42f9190c7b2641a1402bd2d9/model_prices_and_context_window.json",
+        "revision": "1c022d1d06dba1cb42f9190c7b2641a1402bd2d9",
+        "retrievedDate": "2026-11-04"
       }
     },
     {
@@ -911,37 +917,20 @@
       }
     },
     {
-      "id": "un/qwen3.6-27b-mtp",
-      "name": "Qwen3.6 27B MTP",
+      "id": "un/qwen3.8-27b-mtp-davidau",
+      "name": "Qwen3.8 27B MTP DavidAU",
       "category": "chat",
       "providerFamily": "un",
       "piModel": {
-        "id": "un/qwen3.6-27b-mtp",
-        "name": "Qwen3.6 27B MTP",
-        "reasoning": true,
-        "thinkingLevelMap": {
-          "minimal": null,
-          "low": "low",
-          "medium": "medium",
-          "high": "xhigh",
-          "xhigh": null,
-          "max": null
-        },
+        "id": "un/qwen3.8-27b-mtp-davidau",
+        "name": "Qwen3.8 27B MTP DavidAU",
         "input": [
           "text"
         ],
-        "contextWindow": 98304,
-        "compat": {
-          "thinkingFormat": "qwen",
-          "supportsReasoningEffort": true
-        },
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cacheRead": 0,
-          "cacheWrite": 0
-        }
-      }
+        "contextWindow": 98048
+      },
+      "runtimeContextWindow": 98048,
+      "localCostPerMillion": null
     },
     {
       "id": "un/qwen3.8-27b-gguf",

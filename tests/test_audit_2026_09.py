@@ -71,7 +71,7 @@ class ProvenanceReceiptTests(unittest.TestCase):
 
 
 class ContextWindowConflictTests(unittest.TestCase):
-    """GPT-5.6 family must carry explicit context window conflict documentation."""
+    """GPT client windows use the owner-selected compaction policy."""
 
     GPT56_6_IDS = {"cl/gpt-6-luna"}
 
@@ -101,7 +101,7 @@ class ContextWindowConflictTests(unittest.TestCase):
                     note,
                     "contextWindowConflict must mention the provider reference value 1050000",
                 )
-                self.assertEqual(model["contextWindow"], 922000)
+                self.assertEqual(model["contextWindow"], 392192)
                 self.assertEqual(model["providerContextWindow"], 1050000)
 
     def test_gpt56_client_limit_is_proxy_safe_and_provider_limit_retained(self) -> None:
@@ -109,12 +109,12 @@ class ContextWindowConflictTests(unittest.TestCase):
         by_id = self._catalog_by_id()
         for mid in self.GPT56_6_IDS:
             with self.subTest(model=mid):
-                self.assertEqual(by_id[mid]["contextWindow"], 922000)
+                self.assertEqual(by_id[mid]["contextWindow"], 392192)
                 self.assertEqual(by_id[mid]["providerContextWindow"], 1050000)
 
     def test_gpt61_sol_uses_only_verified_proxy_context(self) -> None:
         by_id = self._catalog_by_id()
-        self.assertEqual(by_id["cl/gpt-6.1-sol"]["contextWindow"], 922000)
+        self.assertEqual(by_id["cl/gpt-6.1-sol"]["contextWindow"], 392192)
         self.assertNotIn("providerContextWindow", by_id["cl/gpt-6.1-sol"])
 
 

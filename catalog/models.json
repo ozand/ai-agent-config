@@ -565,7 +565,7 @@
           "xhigh": "xhigh",
           "max": "xhigh"
         },
-        "contextWindow": 1050000,
+        "contextWindow": 392192,
         "maxTokens": 128000,
         "input": [
           "text",
@@ -597,7 +597,7 @@
           "xhigh": "xhigh",
           "max": "xhigh"
         },
-        "contextWindow": 1050000,
+        "contextWindow": 392192,
         "maxTokens": 128000,
         "input": [
           "text",
@@ -629,7 +629,7 @@
           "xhigh": "xhigh",
           "max": "xhigh"
         },
-        "contextWindow": 1050000,
+        "contextWindow": 392192,
         "maxTokens": 128000,
         "input": [
           "text",
@@ -656,7 +656,7 @@
       "output": [
         "text"
       ],
-      "contextWindow": 922000,
+      "contextWindow": 392192,
       "maxTokens": 128000,
       "costPerMillion": {
         "input": 1.0,
@@ -683,7 +683,7 @@
           "xhigh": "xhigh",
           "max": "xhigh"
         },
-        "contextWindow": 922000,
+        "contextWindow": 392192,
         "maxTokens": 128000,
         "input": [
           "text",
@@ -718,7 +718,7 @@
       "output": [
         "text"
       ],
-      "contextWindow": 1050000,
+      "contextWindow": 392192,
       "maxTokens": 128000,
       "costPerMillion": {
         "input": 10.0,
@@ -730,7 +730,7 @@
         "id": "cl/gpt-6-astra",
         "name": "GPT-6 Astra",
         "reasoning": true,
-        "contextWindow": 922000,
+        "contextWindow": 392192,
         "maxTokens": 128000,
         "input": [
           "text",
@@ -757,7 +757,7 @@
       "output": [
         "text"
       ],
-      "contextWindow": 922000,
+      "contextWindow": 392192,
       "maxTokens": 128000,
       "costPerMillion": {
         "input": 2.0,
@@ -786,7 +786,7 @@
           "xhigh": "xhigh",
           "max": "xhigh"
         },
-        "contextWindow": 922000,
+        "contextWindow": 392192,
         "maxTokens": 128000,
         "input": [
           "text",
@@ -813,7 +813,7 @@
       "output": [
         "text"
       ],
-      "contextWindow": 922000,
+      "contextWindow": 392192,
       "maxTokens": 128000,
       "costPerMillion": {
         "input": 2.0,
@@ -840,7 +840,7 @@
           "xhigh": "xhigh",
           "max": "xhigh"
         },
-        "contextWindow": 922000,
+        "contextWindow": 392192,
         "maxTokens": 128000,
         "input": [
           "text",

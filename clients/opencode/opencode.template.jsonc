@@ -328,7 +328,7 @@
           "name": "GPT-5.5",
           "reasoning": true,
           "limit": {
-            "context": 1050000,
+            "context": 392192,
             "output": 128000
           },
           "modalities": {
@@ -348,7 +348,7 @@
           "name": "GPT-5.6 Luna",
           "reasoning": true,
           "limit": {
-            "context": 1050000,
+            "context": 392192,
             "output": 128000
           },
           "modalities": {
@@ -368,7 +368,7 @@
           "name": "GPT-5.6 Sol",
           "reasoning": true,
           "limit": {
-            "context": 1050000,
+            "context": 392192,
             "output": 128000
           },
           "modalities": {
@@ -388,7 +388,7 @@
           "name": "GPT-6.1 Terra",
           "reasoning": true,
           "limit": {
-            "context": 922000,
+            "context": 392192,
             "output": 128000
           },
           "modalities": {
@@ -425,7 +425,7 @@
           "name": "GPT-6 Astra",
           "reasoning": true,
           "limit": {
-            "context": 922000,
+            "context": 392192,
             "output": 128000
           },
           "modalities": {
@@ -445,7 +445,7 @@
           "name": "GPT-6 Luna",
           "reasoning": true,
           "limit": {
-            "context": 922000,
+            "context": 392192,
             "output": 128000
           },
           "modalities": {
@@ -479,7 +479,7 @@
           "name": "GPT-6.1 Sol",
           "reasoning": true,
           "limit": {
-            "context": 922000,
+            "context": 392192,
             "output": 128000
           },
           "modalities": {

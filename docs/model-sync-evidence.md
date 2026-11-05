@@ -32,3 +32,7 @@ Text completions for `cl/claude-opus-5-5-high` and `cl/gemini-4-argon-high` succ
 ## Terra and Qwen correction (2026-11-05)
 
 The current route is `cl/gpt-6.1-terra`; legacy GPT-5.6 Terra references are historical compatibility documentation. The current DavidAU route is `un/qwen3.8-27b-mtp-davidau` with verified runtime context 98,048. Pi advertises the same 98,048 context. No output limit or multimodal capability is claimed.
+
+## GPT client context adjustment (2026-11-05)
+
+For earlier client-side compaction, the policy covers seven GPT IDs: `cl/gpt-5.5`, `cl/gpt-5.6-luna`, `cl/gpt-5.6-sol`, `cl/gpt-6-astra`, `cl/gpt-6-luna`, `cl/gpt-6.1-sol`, and `cl/gpt-6.1-terra`. The ai-agent-config catalog retains all seven entries; the retired 5.5/5.6 entries are in its owner-selected historical snapshot. Their client snapshots and the four active GPT routes use `contextWindow: 392192`. This is a client behavior choice, not evidence of a provider-side context limit. Retired IDs remain absent from the current pi-config snapshot. Provider metadata and pricing evidence are unchanged.

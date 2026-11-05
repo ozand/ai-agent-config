@@ -3,7 +3,7 @@
   "providers": {
     "litellm-edge": {
       "count": 54,
-      "sha256": "ea751bf7a79c3e7777e6b385c0074a428eb36e439e83651124f2793319148e66"
+      "sha256": "34855b58475d7307ee13809651f22301ad584d7c6eb037714489eac6d8391c57"
     },
     "local": {
       "count": 1,

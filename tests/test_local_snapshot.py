@@ -19,7 +19,7 @@ class LocalSnapshotTests(unittest.TestCase):
     def test_snapshot_pi_parity(self):
         expected = [m['piModel'] for m in self.catalog['models']]
         self.assertEqual(self.pi['providers']['litellm-edge']['models'], expected)
-        self.assertEqual(len(expected), 49)
+        self.assertEqual(len(expected), 54)
         manifest = json.loads((ROOT / 'docs/model-snapshot-digests.json').read_text())
         for provider in ['litellm-edge', 'local']:
             entries = self.pi['providers'][provider]['models']

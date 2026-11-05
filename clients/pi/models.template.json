@@ -569,6 +569,26 @@
             "cacheRead": 0,
             "cacheWrite": 0
           }
+        },
+        {
+          "id": "cl/claude-opus-5-5-high",
+          "name": "Claude Opus 5.5 High"
+        },
+        {
+          "id": "cl/gemini-4-argon-high",
+          "name": "Gemini 4 Argon High"
+        },
+        {
+          "id": "cl/gpt-image-2.5",
+          "name": "GPT Image 2.5"
+        },
+        {
+          "id": "cl/gpt-image-2.5-flare",
+          "name": "GPT Image 2.5 Flare"
+        },
+        {
+          "id": "cl/gpt-image-2.5-sunburst",
+          "name": "GPT Image 2.5 Sunburst"
         }
       ]
     },

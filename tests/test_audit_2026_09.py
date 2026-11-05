@@ -211,8 +211,8 @@ class CurrentGenerationApprovalTests(unittest.TestCase):
         models = load_json("catalog/models.json")["models"]
         self.assertEqual(
             len(models),
-            49,
-            "Canonical catalog must preserve 49 owner-local endpoint IDs",
+            54,
+            "Canonical catalog must include the five verified CLIProxy IDs",
         )
 
 
